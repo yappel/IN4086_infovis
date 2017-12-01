@@ -4,7 +4,8 @@
   "description": "Infovis assignement for the course IN4086 at the Delft University of Technology",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run open",
+    "open": "concurrently \"http-server -a localhost -p 1234\" \"open http://localhost:1234\""
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/yappel/IN4086_infovis/issues"
   },
-  "homepage": "https://github.com/yappel/IN4086_infovis#readme"
+  "homepage": "https://github.com/yappel/IN4086_infovis#readme",
+  "devDependencies": {
+    "concurrently": "^3.5.1",
+    "http-server": "^0.10.0"
+  }
 }
