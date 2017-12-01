@@ -1,0 +1,19 @@
+{
+  "name": "in4086-infovis",
+  "version": "0.0.1",
+  "description": "Infovis assignement for the course IN4086 at the Delft University of Technology",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yappel/IN4086_infovis.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yappel/IN4086_infovis/issues"
+  },
+  "homepage": "https://github.com/yappel/IN4086_infovis#readme"
+}
