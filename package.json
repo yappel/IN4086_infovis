@@ -4,6 +4,7 @@
   "description": "Infovis assignement for the course IN4086 at the Delft University of Technology",
   "main": "index.js",
   "scripts": {
+    "build": "webpack",
     "start": "npm run open",
     "open": "concurrently \"http-server -a localhost -p 1234\" \"open http://localhost:1234\""
   },
@@ -18,7 +19,11 @@
   },
   "homepage": "https://github.com/yappel/IN4086_infovis#readme",
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-es2015": "^6.24.1",
     "concurrently": "^3.5.1",
-    "http-server": "^0.10.0"
+    "http-server": "^0.10.0",
+    "webpack": "^3.9.1"
   }
 }
