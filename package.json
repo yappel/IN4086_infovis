@@ -25,5 +25,8 @@
     "concurrently": "^3.5.1",
     "http-server": "^0.10.0",
     "webpack": "^3.9.1"
+  },
+  "dependencies": {
+    "d3": "^4.12.0"
   }
 }
