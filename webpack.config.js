@@ -18,6 +18,15 @@ module.exports = {
             presets: ['es2015']
           }
         }
+      },
+      {
+        test: /\.csv$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {}  
+          }
+        ]
       }
     ]
   },
