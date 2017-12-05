@@ -13,4 +13,6 @@ d3.csv("../data/data.csv", function(error, data) {
 
     console.log("Data processed");
 
-}); 
+});
+
+console.log("all done");
