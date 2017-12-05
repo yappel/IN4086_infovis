@@ -1,18 +1,10 @@
 import * as d3 from "d3";
 import BaseVisualisation from "./visualisations/basevisualisation.js";
+import TagGraph from './visualisations/taggraph.js';
 
 var root = {};
-var bv = new BaseVisualisation(root, []);
+var data = [];
+var visualisations = [];
 
-d3.csv("../data/data.csv", function(error, data) {
-    
-    data.forEach(function(d) {
-        d.date = d3.timeParse("%Y-%m").parse;
-        d.value = +d.value;
-    });
-
-    console.log("Data processed");
-
-});
-
-console.log("all done");
+var graph = new TagGraph(d3.select("#taggraph"), data, {});
+visualisations.push(graph);
