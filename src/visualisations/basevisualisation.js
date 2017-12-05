@@ -5,12 +5,13 @@ class BaseVisualisation {
     /**
      * Base constructor
      * @param {*} root - The root html element the visualisation can use
-     * @param {Object[]} data - The collection of data
+     * @param {*} filterChangedCallback - The function to call when the visualisations filter has changed
      */
-    constructor(root, data) {
+    constructor(root, filterChangedCallback) {
         this.root = root;
-        this.data = data;
-        this.filtered_data = data;
+        this.callback = filterChangedCallback;
+        this.data = [];
+        this.filtered_data = [];
     }
 
     /**
@@ -34,6 +35,13 @@ class BaseVisualisation {
      */
     filter(data) {
         return data;
+    }
+
+    /**
+     * Called when the filter has changed.
+     */
+    filterChanged() {
+        this.callback();
     }
 }
 
