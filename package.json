@@ -7,7 +7,7 @@
     "build": "webpack",
     "build:watch" : "webpack --watch",
     "start": "npm run open",
-    "open": "concurrently \"webpack --watch\" \"http-server -a localhost -p 8080\" \"open http://localhost:8080\""
+    "open": "concurrently \"webpack --watch\" \"http-server ./dist -a localhost -p 8080\" \"open http://localhost:8080\""
   },
   "repository": {
     "type": "git",
