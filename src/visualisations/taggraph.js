@@ -40,13 +40,9 @@ class TagGraph extends BaseVisualisation {
         // TODO: visualisation
 
         var data_subset = data.slice(0,21);
-        console.log("data subset");
-        console.log(data_subset);
         var nested_data = d3.nest()
             .key((d) => d.PostId)
             .entries(data_subset);
-        console.log("nested data");
-        console.log(nested_data);
         
         var link_data = [];
         var node_data = [];

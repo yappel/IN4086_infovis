@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import TagGraph from './visualisations/taggraph.js';
+import BarChart from './visualisations/barchart.js';
 import data_url from '../data/QueryResults.csv';
+
 
 var data = [];
 var visualisations = [];
@@ -25,8 +27,15 @@ d3.csv(data_url, (d) => {
         });
     });
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
+    var barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     visualisations.push(graph);
+    visualisations.push(barchart);
 
+    window.barchart = barchart;
+    window.visualisations = visualisations;
+    window.data = data;
+
+    
     visualisations.forEach(vis => {
         vis.update(data, data, true);
     });
