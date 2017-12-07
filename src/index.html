@@ -7,19 +7,6 @@
     <p>Hello!</p>
     <p>testing this functionality</p>
     <p>another test</p>
-    <button onclick="updateBar('ScoreCount')">ScoreCount</button>
-    <button onclick="updateBar('AnswerCount')">AnswerCount</button>
-    <button onclick="updateBar('CommentCount')">CommentCount</button>
-    <button onclick="updateBar('FavoriteCount')">FavoriteCount</button>
-    <button onclick="updateBar('ViewCount')">ViewCount</button>
-    <script>
-      var updateBar = function(type) {
-        barchart.countFunc = (tag) => tag[type];
-        visualisations.forEach(vis => {
-            vis.update(data, data, true);
-        });
-      }
-    </script>
 
     <div id="taggraph"></div>
     <div id="barchart"></div>
