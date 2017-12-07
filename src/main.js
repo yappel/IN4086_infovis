@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import BaseVisualisation from "./visualisations/basevisualisation.js";
 import TagGraph from './visualisations/taggraph.js';
 import data_url from '../data/QueryResults.csv';
 
@@ -8,6 +7,16 @@ var visualisations = [];
 
 var numeric_value_properties = ["Count", "Score", "ViewCount", "AnswerCount", "CommentCount", "FavoriteCount"];
 
+var filterCallback = function() {
+    var filtered_data = data;
+    visualisations.forEach(vis => {
+        filtered_data = vis.filter(filtered_data);
+    });
+    visualisations.forEach(vis => {
+        vis.update(data, filtered_data, false);
+    });
+}
+
 d3.csv(data_url, (d) => {
     data = d;
     data.forEach(data_element => {
@@ -15,8 +24,11 @@ d3.csv(data_url, (d) => {
             data_element[id] = parseInt(data_element[id]);
         });
     });
-    var graph = new TagGraph(d3.select("#taggraph"), data, {});
+    var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
     visualisations.push(graph);
-    console.log(data);
+
+    visualisations.forEach(vis => {
+        vis.update(data, data, true);
+    });
 });
 
