@@ -56,14 +56,14 @@ class TagGraph extends BaseVisualisation {
             .data(this.transformed_data.links)
             .enter().append("line")
                 .attr("stroke-width", (d) => Math.sqrt(d.value)) // TODO: other function for weight
-                .attr("stroke", (d) => "#ff00ff"); // TODO: derive colour from value
+                .attr("stroke", (d) => "#0000ff"); // TODO: derive colour from value
             // TODO: update, exit
 
         this.nodes.selectAll("circle")
             .data(this.transformed_data.nodes)
             .enter().append("circle")
                 .attr("r", this.options.node_radius)
-                .attr("fill", (d) => "#fff000") // TODO: change colour based on ID
+                .attr("fill", (d) => "#ff0000") // TODO: change colour based on ID
                 //.call(...) TODO: logic for interaction
             // TODO: update, exit
         this.simulation
@@ -103,10 +103,10 @@ class TagGraph extends BaseVisualisation {
             ],
             links: [
                 { source: 1, target: 2, value: 1 },
-                { source: 1, target: 3, value: 4 },
-                { source: 1, target: 4, value: 3 },
+                { source: 1, target: 3, value: 15 },
+                { source: 1, target: 4, value: 10 },
                 { source: 2, target: 3, value: 1 },
-                { source: 3, target: 4, value: 3 } 
+                { source: 3, target: 4, value: 13 }
             ]
         }
     }
