@@ -7,6 +7,33 @@
     <p>Hello!</p>
     <p>testing this functionality</p>
     <p>another test</p>
+    <fieldset>
+      <legend>Choose what counts to show in the bar chart </legend>
+      <div>
+        <input id="checkbox_answercount" type="checkbox" value="AnswerCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_answercount">Answer count</label>
+      </div>
+      <div>
+        <input id="checkbox_commentcount" type="checkbox" value="CommentCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_commentcount">Comment count</label>
+      </div>
+      <div>
+        <input id="checkbox_favoritecount" type="checkbox" value="FavoriteCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_favoritecount">Favorite count</label>
+      </div>
+      <div>
+        <input id="checkbox_usercount" type="checkbox" value="OwnerUserIdCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_usercount">User id count</label>
+      </div>
+      <div>
+        <input id="checkbox_scorecount" type="checkbox" value="ScoreCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_scorecount">Score count</label>
+      </div>
+      <div>
+        <input id="checkbox_viewcount" type="checkbox" value="ViewCount" onclick="updateBarChart(this.value, this.checked)">
+        <label for="checkbox_viewcount">View count</label>
+      </div>
+    </fieldset>
 
     <div id="taggraph"></div>
     <div id="barchart"></div>

@@ -12,15 +12,14 @@ class BarChart extends BaseVisualisation {
     disable(metricName) {
         var i= this.countsToDisplay.indexOf(metricName);
         if(i > -1) {
-            this.countsToDisplay.slice(i,1);
+            this.countsToDisplay.splice(i,1);
         }
     }
 
     constructor(root, filterChangedCallback, data, options) {
         super(root, data);
 
-        var countsToDisplay = ["CommentCount", "OwnerUserIdCount", "AnswerCount", "FavoriteCount"];
-        this.countsToDisplay = countsToDisplay;
+        this.countsToDisplay = options.countsToDisplay ? options.countsToDisplay : [];
         var margin = {
                 top: 20,
                 right: 20,
@@ -33,7 +32,13 @@ class BarChart extends BaseVisualisation {
         this.height = height;
 
         this.innerScaleBand = d3.scaleBand().padding(0.05);
-        this.colorScheme = d3.scaleOrdinal().range(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']);
+        var metrics = this.tag().Metrics;
+        var colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'];
+        this.colorScheme = function(metricName) {
+            var index = metrics.indexOf(metricName);
+            return index < 0 || index > colors.length - 1 ? 'black' : colors[index]; 
+        }
+
         var xScaleBand = d3.scaleBand()
             .range([0, width])
             .paddingInner(0.05);
@@ -45,6 +50,7 @@ class BarChart extends BaseVisualisation {
         var xAxis = d3.axisBottom(xScaleBand);
         var yAxis = d3.axisLeft(yScaleBand);
         this.yAxis = yAxis;
+        this.xAxis = xAxis;
 
         this.svg = d3.select("#barchart").append('svg')
             .attr("width", width + margin.left + margin.right)
@@ -88,7 +94,17 @@ class BarChart extends BaseVisualisation {
          * Updates the domain of the x axis.
          */
         var updateXAxis = function () {
-            xScaleBand.domain(Object.keys(tags).sort())
+            xScaleBand.domain(Object.keys(tags).sort());
+            chart.select(".xAxis")
+                .call(xAxis)
+                .selectAll("text")
+                    .style("text-anchor", "end")
+                    .style("font-size", "1.5em")
+                    .attr("dx", "-.8em")
+                    .attr("dy", ".15em")
+                    .attr("transform", function(d){
+                        return "rotate(-65)";
+                    });;
         };
 
         /**
@@ -105,15 +121,36 @@ class BarChart extends BaseVisualisation {
             dataGroup.selectAll("g")
                 .data(Object.values(filteredTags))
                 .enter().append("g")
-                    .attr("transform", (d) => `translate(${xScaleBand(d.TagName)},0)`)
-                .selectAll("rect")
-                .data((d) => countsToDisplay.map(m => ({measure:m, count :d[m]})))
-                .enter().append("rect")
-                    .attr("x", (d) => innerScaleBand(d.measure))
-                    .attr("y", (d) => yScaleBand   (d.count))
+                    .attr("transform", (d) => `translate(${xScaleBand(d.TagName)},0)`);
+            
+            var bars = dataGroup.selectAll("g").selectAll("rect")
+                .data((d) => {return countsToDisplay.map(m => ({measure:m, count :d[m]}))})
+            
+            bars.transition()
+                .attr("width", innerScaleBand.bandwidth())
+                .attr("height", (d) => height - yScaleBand(d.count))
+                .attr("fill", (d) => colorScheme(d.measure))
+                .attr("y", (d) => yScaleBand(d.count))
+                .attr("x", (d) =>innerScaleBand(d.measure));
+            bars.enter().append("rect")
+                    .style("opacity", "0")
+                    .attr("fill", (d) => colorScheme(d.measure))
+                    .attr("x", (d) =>innerScaleBand(d.measure))
+                    .attr("y", (d) => height)
+                    .attr("height", (d) => 0)
+                    .transition()
+                    .style("opacity", "1")
+                    .attr("y", (d) => yScaleBand(d.count))
                     .attr("width", innerScaleBand.bandwidth())
-                    .attr("height", (d) => height - yScaleBand (d.count))
-                    .attr("fill", (d) => colorScheme(d.measure));
+                    .attr("height", (d) => height - yScaleBand(d.count))
+                bars.merge(bars)
+                    
+
+            bars.exit().transition()
+                .style("opacity", "0")
+                .attr("height", (d) => 0)
+                .attr("y", (d) => height)
+                .remove();
         }
        
 
@@ -126,6 +163,7 @@ class BarChart extends BaseVisualisation {
         var countsToDisplay = this.countsToDisplay;
         var height = this.height;
         var yAxis = this.yAxis;
+        var xAxis = this.xAxis;
         var chart = this.svg;
         var yScaleBand  = this.yScaleBand   ;
         var xScaleBand = this.xScaleBand;
@@ -150,6 +188,8 @@ class BarChart extends BaseVisualisation {
     tag(dataEntry) {
         var self = {};
         var userIds = {}
+        self.Metrics = ["AnswerCount","CommentCount","FavoriteCount","ViewCount","OwnerUserIdCount","ScoreCount"]
+        if(!dataEntry) return self;
 
         self.TagName = dataEntry.TagName;
         self.AddDataEntry = function (dataEntry) {
