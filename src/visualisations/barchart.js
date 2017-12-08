@@ -2,6 +2,19 @@ import BaseVisualisation from "./basevisualisation.js";
 
 class BarChart extends BaseVisualisation {
 
+    enable(metricName) {
+        var i= this.countsToDisplay.indexOf(metricName);
+        if(i === -1) {
+            this.countsToDisplay.push(metricName);
+        }
+    }
+
+    disable(metricName) {
+        var i= this.countsToDisplay.indexOf(metricName);
+        if(i > -1) {
+            this.countsToDisplay.slice(i,1);
+        }
+    }
 
     constructor(root, filterChangedCallback, data, options) {
         super(root, data);
@@ -19,59 +32,120 @@ class BarChart extends BaseVisualisation {
        
         this.height = height;
 
-        var tags = this.transformData(data);
-
-        var innerAxis = d3.scaleBand()
-            .padding(0.05);
-        this.innerAxis = innerAxis;
-        //Todo fix color scheme
-        var colorScheme = d3.scaleOrdinal().range(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']);
-        this.colorScheme = colorScheme;
-        var xChart = d3.scaleBand()
-            .domain(Object.keys(tags).sort())
+        this.innerScaleBand = d3.scaleBand().padding(0.05);
+        this.colorScheme = d3.scaleOrdinal().range(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']);
+        var xScaleBand = d3.scaleBand()
             .range([0, width])
             .paddingInner(0.05);
-        this.xChart = xChart;
+        this.xScaleBand = xScaleBand;
             
-        this.barWidth = width / Object.keys(tags).length;
+        var yScaleBand = d3.scaleLinear().range([height, 0]).domain([0,100]);
+        this.yScaleBand = yScaleBand;
 
-        var yChart = d3.scaleLinear().range([height, 0]).domain([0,100]);
-        this.yChart = yChart;
-
-        var xAxis = d3.axisBottom(xChart);
-        var yAxis = d3.axisLeft(yChart);
+        var xAxis = d3.axisBottom(xScaleBand);
+        var yAxis = d3.axisLeft(yScaleBand);
         this.yAxis = yAxis;
 
         this.svg = d3.select("#barchart").append('svg')
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
-            .attr("transform",
-                "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         
-        //set up axes
-        // left axis
         this.svg.append("g")
             .attr("class", "yAxis")
             .call(yAxis)
             
-        //bottom axis
         this.svg.append("g")
-        .attr("class", "xAxis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis)
-        .selectAll("text")
-            .style("text-anchor", "end")
-            .style("font-size", "1.5em")
-            .attr("dx", "-.8em")
-            .attr("dy", ".15em")
-            .attr("transform", function(d){
-                return "rotate(-65)";
-            });
+            .attr("class", "xAxis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis)
+            .selectAll("text")
+                .style("text-anchor", "end")
+                .style("font-size", "1.5em")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", function(d){
+                    return "rotate(-65)";
+                });
         
         this.dataGroup = this.svg.append("g");
             
     }
+
+    update(data, filtered_data, data_has_changed = false) {
+        /**
+         * Updates the domain of the y axis.
+         */
+        var updateYAxis = function () {
+            var allcounts = Object.keys(filteredTags).map(tag => countsToDisplay.map(m => filteredTags[tag][m]));
+            var maxy = d3.max([].concat(...allcounts), i=>i);
+            yScaleBand.domain( [0, maxy] );
+            chart.select(".yAxis").call(yAxis);
+        };
+
+        /**
+         * Updates the domain of the x axis.
+         */
+        var updateXAxis = function () {
+            xScaleBand.domain(Object.keys(tags).sort())
+        };
+
+        /**
+         * Updates the amount of bars that should be shown per tag.
+         */
+        var updateCountsToDisplay = function () {
+            innerScaleBand.domain(countsToDisplay).rangeRound([0, xScaleBand.bandwidth()]);
+        }
+        
+        /**
+         * Update the bars of the bar chart.
+         */
+        var updateBars = function () {
+            dataGroup.selectAll("g")
+                .data(Object.values(filteredTags))
+                .enter().append("g")
+                    .attr("transform", (d) => `translate(${xScaleBand(d.TagName)},0)`)
+                .selectAll("rect")
+                .data((d) => countsToDisplay.map(m => ({measure:m, count :d[m]})))
+                .enter().append("rect")
+                    .attr("x", (d) => innerScaleBand(d.measure))
+                    .attr("y", (d) => yScaleBand   (d.count))
+                    .attr("width", innerScaleBand.bandwidth())
+                    .attr("height", (d) => height - yScaleBand (d.count))
+                    .attr("fill", (d) => colorScheme(d.measure));
+        }
+       
+
+
+        super.update(data, filtered_data, data_has_changed);
+        console.log("Updating data for barchart...");
+        var tags = this.transformData(data);
+        var filteredTags = this.transformData(filtered_data);
+
+        var countsToDisplay = this.countsToDisplay;
+        var height = this.height;
+        var yAxis = this.yAxis;
+        var chart = this.svg;
+        var yScaleBand  = this.yScaleBand   ;
+        var xScaleBand = this.xScaleBand;
+        var innerScaleBand = this.innerScaleBand;
+        var colorScheme = this.colorScheme;
+        var dataGroup = this.dataGroup;
+
+        updateYAxis();
+        updateXAxis();
+        updateCountsToDisplay();
+        updateBars();
+        
+        console.log("Data for barChart updated!");
+    }
+
+    filter(data) {
+        // TODO: filtering
+        return data;
+    }
+
 
     tag(dataEntry) {
         var self = {};
@@ -115,54 +189,6 @@ class BarChart extends BaseVisualisation {
             }
         });
         return tags;
-    }
-
-
-    update(data, filtered_data, data_has_changed = false) {
-        super.update(data, filtered_data, data_has_changed);
-        console.log("Updating data for barchart...");
-        var tags = this.transformData(data);
-        var countsToDisplay = this.countsToDisplay;
-
-        var allcounts = Object.keys(tags).map(tag => countsToDisplay.map(m => tags[tag][m]));
-        var maxy = d3.max([].concat(...allcounts), i=>i);
-        // var x = this.x;
-        // var y = this.y;
-        var countFunc = this.countFunc;
-        var height = this.height;
-        var yAxis = this.yAxis;
-        var chart = this.svg;
-        var yChart = this.yChart;
-        var xChart = this.xChart;
-        var innerAxis = this.innerAxis;
-        var colorScheme = this.colorScheme;
-
-        innerAxis.domain(countsToDisplay).rangeRound([0, xChart.bandwidth()]);
-        //Update y axis
-        this.yChart.domain( [0, maxy] );
-        chart.select(".yAxis").call(yAxis);
-        
- 
-        this.dataGroup.selectAll("g")
-            .data(Object.values(tags))
-            .enter().append("g")
-                .attr("transform", (d) => `translate(${xChart(d.TagName)},0)`)
-            .selectAll("rect")
-            .data((d) => countsToDisplay.map(m => ({measure:m, count :d[m]})))
-            .enter().append("rect")
-                .attr("x", (d) => innerAxis(d.measure))
-                .attr("y", (d) => yChart(d.count))
-                .attr("width", innerAxis.bandwidth())
-                .attr("height", (d) => height - yChart(d.count))
-                .attr("fill", (d) => colorScheme(d.measure));
-      
-        
-        console.log("Data for barChart updated!");
-    }
-
-    filter(data) {
-        // TODO: filtering
-        return data;
     }
 }
 
