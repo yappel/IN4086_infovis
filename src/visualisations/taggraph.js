@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import BaseVisualisation from "./basevisualisation.js";
 /**
- * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the 
+ * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the
  * count of posts which have been tagged by both tags making up the edge.
  * Used as explanation of force simulation: https://bl.ocks.org/mbostock/4062045
  */
@@ -13,7 +13,7 @@ class TagGraph extends BaseVisualisation {
         var dragend = this.dragend;
         var nodes = this.nodes;
         var self = this;
-        
+
         function dragStart() {
             var p = d3.mouse(this);
             self.dragstart = p;
@@ -24,14 +24,14 @@ class TagGraph extends BaseVisualisation {
                     .attr("height",0)
                     .style("opacity",0.4);
         }
-        
+
         function dragMove() {
             var p = d3.mouse(this);
             var width = Math.abs(self.dragstart[0] - p[0]);
             var height = Math.abs(self.dragstart[1] - p[1]);
             var x = self.dragstart[0] < p[0] ? self.dragstart[0] : p[0];
             var y = self.dragstart[1] < p[1] ? self.dragstart[1] : p[1];
-            
+
             self.selectionRect
                     .attr("x",x)
                     .attr("y",y)
@@ -47,31 +47,41 @@ class TagGraph extends BaseVisualisation {
             var miny = Math.min(self.dragstart[1],self.dragend[1]);
             var maxx = Math.max(self.dragstart[0],self.dragend[0]);
             var maxy = Math.max(self.dragstart[1],self.dragend[1]);
+            console.log(minx,miny,maxx,maxy,x,y);
             var res =  x > minx && x < maxx
                 && y > miny && y < maxy;
             return res;
         }
-        
-        
+
+
         function dragEnd() {
             var p = d3.mouse(this);
             self.dragend = p;
             self.selectionRect.remove();
+            self.selectedTags = [];
             nodes.selectAll("circle")
-                .attr("fill", (d) => isInsideSelection(d) ? "green" : "red");
+                .attr("fill", (d) => isInsideSelection(d) ? "green" : "red")
+                .each(d => {
+                    if (isInsideSelection(d)) {
+                        self.selectedTags.push(d.id);
+                    }
+                });
+            // console.log(self.dragstart);
+            // console.log(self.dragend);
+            self.filterChanged();
         }
-        
+
         var dragBehavior = d3.drag()
             .on("drag", dragMove)
             .on("start", dragStart)
             .on("end", dragEnd);
-        
+
         svg.call(dragBehavior);
     }
 
 
     /**
-     * Constructor for TagGraph. Appends an svg element to root of specified width and height in options and 
+     * Constructor for TagGraph. Appends an svg element to root of specified width and height in options and
      * creates a d3 ForceSimilated graph in there.
      * @param {*} root - The root html element the visualisation can use
      * @param {*} filterChangedCallback - The function to call when the visualisations filter has changed
@@ -106,8 +116,8 @@ class TagGraph extends BaseVisualisation {
         var data_subset = data.slice(0,21);
         var nested_data = d3.nest()
             .key((d) => d.PostId)
-            .entries(data_subset); 
-        
+            .entries(data_subset);
+
         var link_data = [];
         var node_data = [];
         this.transformed_data = this.transformData(data);
@@ -136,10 +146,20 @@ class TagGraph extends BaseVisualisation {
 
     filter(data) {
         // TODO: filtering
-        return data;
+        // console.log("Start applying taggraph filter");
+        var filtered = data;
+        if(this.selectedTags.length >0 ) {
+            filtered =  data.filter(d => this.selectedTags.indexOf(d.TagName) >= 0);
+        }
+        console.log("selectedTags", this.selectedTags);
+        // console.log("data", data);
+        // console.log("filtered", filtered);
+        // console.log("Finished applying taggraph filter");
+        return filtered;
     }
 
     ticked() {
+        console.log(new Date());
         this.links.selectAll("line")
             .attr("x1", (d) => d.source.x)
             .attr("y1", (d) => d.source.y)
@@ -202,7 +222,7 @@ class TagGraph extends BaseVisualisation {
                 }
             }
         }
-        // Return the transformed data
+
         return {
             nodes: nodes.map(d => ({id: d})),
             links: links
