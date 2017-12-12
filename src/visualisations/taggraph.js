@@ -13,11 +13,12 @@ class TagGraph extends BaseVisualisation {
         var dragend = this.dragend;
         var nodes = this.nodes;
         var self = this;
+        var selectionRect = null;
 
         function dragStart() {
             var p = d3.mouse(this);
             self.dragstart = p;
-            self.selectionRect = self.svg.append("rect")
+            selectionRect = self.svg.append("rect")
                     .attr("x",p[0])
                     .attr("y",p[1])
                     .attr("width",0)
@@ -32,7 +33,7 @@ class TagGraph extends BaseVisualisation {
             var x = self.dragstart[0] < p[0] ? self.dragstart[0] : p[0];
             var y = self.dragstart[1] < p[1] ? self.dragstart[1] : p[1];
 
-            self.selectionRect
+            selectionRect
                     .attr("x",x)
                     .attr("y",y)
                     .attr("width", width)
@@ -57,7 +58,7 @@ class TagGraph extends BaseVisualisation {
         function dragEnd() {
             var p = d3.mouse(this);
             self.dragend = p;
-            self.selectionRect.remove();
+            selectionRect.remove();
             self.selectedTags = [];
             nodes.selectAll("circle")
                 .attr("fill", (d) => isInsideSelection(d) ? "green" : "red")
