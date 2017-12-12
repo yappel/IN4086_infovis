@@ -152,15 +152,14 @@ class TagGraph extends BaseVisualisation {
     }
 
     transformData(data) {
+        // Aggregate the data per post
         var nested_data = d3.nest()
             .key(d => d.PostId)
             .entries(data);
-
+        // The nodes per tag
         var nodes = d3.map(data, d => d.TagName).keys();
-
-        var filtered = [];
-        var magic = {};
-
+        // Create the matrix indicating the amount of connections between nodes
+        var connection_matrix = {};
         nested_data.forEach(element => {
             if (element.values.length > 1) {
                 filtered.push(element);
@@ -168,74 +167,47 @@ class TagGraph extends BaseVisualisation {
                     var tagNameI = element.values[i].TagName;
                     for (var j = i + 1; j < element.values.length; j++) {
                         var tagNameJ = element.values[j].TagName
-                        if (!magic[tagNameI]) {
-                            magic[tagNameI] = {};
+                        if (!connection_matrix[tagNameI]) {
+                            connection_matrix[tagNameI] = {};
                         }
-                        if (magic[tagNameI][tagNameJ]) {
-                            magic[tagNameI][tagNameJ] = magic[tagNameI][tagNameJ] + 1;
+                        if (connection_matrix[tagNameI][tagNameJ]) {
+                            connection_matrix[tagNameI][tagNameJ] = connection_matrix[tagNameI][tagNameJ] + 1;
                         } else {
-                            magic[tagNameI][tagNameJ] = 1;
+                            connection_matrix[tagNameI][tagNameJ] = 1;
                         }
 
-                        if (!magic[tagNameJ]) {
-                            magic[tagNameJ] = {};
+                        if (!connection_matrix[tagNameJ]) {
+                            connection_matrix[tagNameJ] = {};
                         }
-                        if (magic[tagNameJ][tagNameI]) {
-                            magic[tagNameJ][tagNameI] = magic[tagNameJ][tagNameI] + 1;
+                        if (connection_matrix[tagNameJ][tagNameI]) {
+                            connection_matrix[tagNameJ][tagNameI] = connection_matrix[tagNameJ][tagNameI] + 1;
                         } else {
-                            magic[tagNameJ][tagNameI] = 1;
+                            connection_matrix[tagNameJ][tagNameI] = 1;
                         }
                     }
                 }
             }
         });
-
+        // Create all the links
         var links = [];
-
         for (var i = 0; i < nodes.length; i++) {
             var tagNameI = nodes[i];
             for (var j = i + 1; j < nodes.length; j++) {
                 var tagNameJ = nodes[j];
-                if (magic[tagNameI] && magic[tagNameI][tagNameJ]){
+                if (connection_matrix[tagNameI] && connection_matrix[tagNameI][tagNameJ]){
                     links.push({
                         source: tagNameI,
                         target: tagNameJ,
-                        value: magic[tagNameI][tagNameJ]
+                        value: connection_matrix[tagNameI][tagNameJ]
                     });
                 }
             }
         }
-
-        console.log("nodes");
-        console.log(nodes);
-        console.log("links");
-        console.log(links);
-        console.log("magic");
-        console.log(magic);
-
+        // Return the transformed data
         return {
             nodes: nodes.map(d => ({id: d})),
             links: links
         };
-
-        // return res;
-        // TODO: transform the actual data
-        return {
-            nodes: [
-                { id: 1 },
-                { id: 2 },
-                { id: 3 },
-                { id: 4 },
-                { id: 5 }
-            ],
-            links: [
-                { source: 1, target: 2, value: 1 },
-                { source: 1, target: 3, value: 15 },
-                { source: 1, target: 4, value: 10 },
-                { source: 2, target: 3, value: 1 },
-                { source: 3, target: 4, value: 13 }
-            ]
-        }
     }
 }
 
