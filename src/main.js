@@ -27,9 +27,9 @@ d3.csv(data_url, (d) => {
             data_element[id] = parseInt(data_element[id]);
         });
     });
-    // var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
+    var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
     barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
-    // visualisations.push(graph);
+    visualisations.push(graph);
     visualisations.push(barchart);
 
     window.barchart = barchart;

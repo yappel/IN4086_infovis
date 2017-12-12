@@ -39,7 +39,8 @@ class TagGraph extends BaseVisualisation {
         super.update(data, filtered_data, data_has_changed);
         // TODO: visualisation
 
-        var data_subset = data.slice(0,21);
+        var data_subset = data;
+        //data.slice(0,21);
         var nested_data = d3.nest()
             .key((d) => d.PostId)
             .entries(data_subset);
@@ -88,6 +89,49 @@ class TagGraph extends BaseVisualisation {
     }
 
     transformData(data) {
+        var posts = {};
+        var nodes = {};
+        data.forEach(d => {
+            var tagid = parseInt(d.TagId);
+            if(!posts[d.PostId]) {
+                posts[d.PostId] = [tagid];
+            } else {
+                posts[d.PostId].push(tagid);
+            }
+            if(!nodes[tagid]) {
+                nodes[tagid] = true;
+            }
+        });
+        var links = {};
+        Object.keys(nodes).forEach(postId => {
+            var tags = posts[postId];
+            Object.keys(tags).forEach(tag1 => {
+                tags.forEach(tag2 => {
+                    if(tag1 === tag2) return;
+                    if(links[tag1]) {
+                        if(links[tag1][tag2]) {
+                            links[tag1][tag2] += 1;
+                        } else {
+                            links[tag1][tag2] = 1;
+                        }
+                    } else  if(links[tag2]) {
+                        if(links[tag2][tag1]) {
+                            links[tag2][tag1] += 1;
+                        } else {
+                            links[tag2][tag1] = 1;
+                        }
+                    } else {
+                        links[tag1] = {};
+                        links[tag1][tag2] = 1;
+                    }
+                });
+            });
+        })
+        var res = {
+            nodes: Object.keys(nodes).map(n => ({id:parseInt(n.id)})),
+            links: Object.keys(links).map(t1 => t1.map(t2 => ({source:parseInt(t1),target:parseInt(t2), value:links[t1][t2]}) ))
+        }
+        return res;
         // TODO: transform the actual data
         return {
             nodes: [
