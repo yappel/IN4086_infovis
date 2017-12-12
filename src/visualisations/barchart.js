@@ -17,7 +17,7 @@ class BarChart extends BaseVisualisation {
     }
 
     constructor(root, filterChangedCallback, data, options) {
-        super(root, data);
+        super(root, filterChangedCallback);
 
         this.countsToDisplay = options.countsToDisplay ? options.countsToDisplay : [];
         var margin = {
