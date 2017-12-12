@@ -162,7 +162,6 @@ class TagGraph extends BaseVisualisation {
         var connection_matrix = {};
         nested_data.forEach(element => {
             if (element.values.length > 1) {
-                filtered.push(element);
                 for (var i = 0; i < element.values.length; i++) {
                     var tagNameI = element.values[i].TagName;
                     for (var j = i + 1; j < element.values.length; j++) {
