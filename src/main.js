@@ -19,6 +19,11 @@ var filterCallback = function() {
         vis.update(data, filtered_data, false);
     });
 }
+window.updateshit = () => {
+    visualisations.forEach(vis => {
+        vis.update(data, data, true);
+    });
+}
 
 d3.csv(data_url, (d) => {
     data = d;
@@ -37,10 +42,10 @@ d3.csv(data_url, (d) => {
     window.data = data;
 
     
-    visualisations.forEach(vis => {
-        vis.update(data, data, true);
-    });
+    window.updateshit();
 });
+
+
 var countsToDisplay = ["CommentCount", "OwnerUserIdCount", "AnswerCount", "FavoriteCount"];
 window.updateBarChart = (val, checked) => {
     if(checked) {
