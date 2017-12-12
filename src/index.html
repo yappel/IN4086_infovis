@@ -2,41 +2,62 @@
 <html>
   <head>
       <script src="http://d3js.org/d3.v4.min.js"></script>
+      <style>
+        .main, body, html {width:100%;height: 100%;padding:0;margin:0;}
+        .left, .right, .top, .bottom {flex:1}
+        .main{display:flex;flex-direction: row;}
+        .left{ background : seagreen;}
+        .right{display:flex;flex-direction: column; background-color: khaki}
+        .top{background-color: firebrick}
+        .bottom{background-color: sienna}
+      </style>
     </head>
-  <body>
-    <p>Hello!</p>
-    <p>testing this functionality</p>
-    <p>another test</p>
-    <div id="taggraph"></div>
-    
-    <fieldset>
-      <legend>Choose what counts to show in the bar chart </legend>
-      <div>
-        <input id="checkbox_answercount" type="checkbox" value="AnswerCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_answercount">Answer count</label>
+  <body class="main"> 
+    <div class="left">
+        <div id="taggraph"></div>
+    </div>
+    <div class="right">
+      <div class="top">
+          <fieldset>
+              <legend>Choose what counts to show in the bar chart </legend>
+              <div>
+                <input id="checkbox_answercount" type="checkbox" value="AnswerCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_answercount">Answer count</label>
+              </div>
+              <div>
+                <input id="checkbox_commentcount" type="checkbox" value="CommentCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_commentcount">Comment count</label>
+              </div>
+              <div>
+                <input id="checkbox_favoritecount" type="checkbox" value="FavoriteCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_favoritecount">Favorite count</label>
+              </div>
+              <div>
+                <input id="checkbox_usercount" type="checkbox" value="OwnerUserIdCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_usercount">User id count</label>
+              </div>
+              <div>
+                <input id="checkbox_scorecount" type="checkbox" value="ScoreCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_scorecount">Score count</label>
+              </div>
+              <div>
+                <input id="checkbox_viewcount" type="checkbox" value="ViewCount" onclick="updateBarChart(this.value, this.checked)">
+                <label for="checkbox_viewcount">View count</label>
+              </div>
+            </fieldset>
       </div>
-      <div>
-        <input id="checkbox_commentcount" type="checkbox" value="CommentCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_commentcount">Comment count</label>
+      <div class="bottom">
+          <div id="barchart">
+             
+            </div>
       </div>
-      <div>
-        <input id="checkbox_favoritecount" type="checkbox" value="FavoriteCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_favoritecount">Favorite count</label>
-      </div>
-      <div>
-        <input id="checkbox_usercount" type="checkbox" value="OwnerUserIdCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_usercount">User id count</label>
-      </div>
-      <div>
-        <input id="checkbox_scorecount" type="checkbox" value="ScoreCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_scorecount">Score count</label>
-      </div>
-      <div>
-        <input id="checkbox_viewcount" type="checkbox" value="ViewCount" onclick="updateBarChart(this.value, this.checked)">
-        <label for="checkbox_viewcount">View count</label>
-      </div>
-    </fieldset>
 
-    <div id="barchart"></div>
+    </div>
+    
+    
+    
+    
+
+    
   </body>
 </html>

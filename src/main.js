@@ -46,7 +46,6 @@ d3.csv(data_url, (d) => {
 });
 
 
-var countsToDisplay = ["CommentCount", "OwnerUserIdCount", "AnswerCount", "FavoriteCount"];
 window.updateBarChart = (val, checked) => {
     if(checked) {
         barchart.enable(val);
