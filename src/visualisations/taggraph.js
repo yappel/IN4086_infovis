@@ -103,8 +103,7 @@ class TagGraph extends BaseVisualisation {
         super.update(data, filtered_data, data_has_changed);
         // TODO: visualisation
 
-        var data_subset = data;
-        //data.slice(0,21);
+        var data_subset = data.slice(0,21);
         var nested_data = d3.nest()
             .key((d) => d.PostId)
             .entries(data_subset); 
@@ -153,48 +152,72 @@ class TagGraph extends BaseVisualisation {
     }
 
     transformData(data) {
-        // var posts = {};
-        // var nodes = {};
-        // data.forEach(d => {
-        //     var tagid = parseInt(d.TagId);
-        //     if(!posts[d.PostId]) {
-        //         posts[d.PostId] = [tagid];
-        //     } else {
-        //         posts[d.PostId].push(tagid);
-        //     }
-        //     if(!nodes[tagid]) {
-        //         nodes[tagid] = true;
-        //     }
-        // });
-        // var links = {};
-        // Object.keys(nodes).forEach(postId => {
-        //     var tags = posts[postId];
-        //     Object.keys(tags).forEach(tag1 => {
-        //         tags.forEach(tag2 => {
-        //             if(tag1 === tag2) return;
-        //             if(links[tag1]) {
-        //                 if(links[tag1][tag2]) {
-        //                     links[tag1][tag2] += 1;
-        //                 } else {
-        //                     links[tag1][tag2] = 1;
-        //                 }
-        //             } else  if(links[tag2]) {
-        //                 if(links[tag2][tag1]) {
-        //                     links[tag2][tag1] += 1;
-        //                 } else {
-        //                     links[tag2][tag1] = 1;
-        //                 }
-        //             } else {
-        //                 links[tag1] = {};
-        //                 links[tag1][tag2] = 1;
-        //             }
-        //         });
-        //     });
-        // })
-        // var res = {
-        //     nodes: Object.keys(nodes).map(n => ({id:parseInt(n.id)})),
-        //     links: Object.keys(links).map(t1 => t1.map(t2 => ({source:parseInt(t1),target:parseInt(t2), value:links[t1][t2]}) ))
-        // }
+        var nested_data = d3.nest()
+            .key(d => d.PostId)
+            .entries(data);
+
+        var nodes = d3.map(data, d => d.TagName).keys();
+
+        var filtered = [];
+        var magic = {};
+
+        nested_data.forEach(element => {
+            if (element.values.length > 1) {
+                filtered.push(element);
+                for (var i = 0; i < element.values.length; i++) {
+                    var tagNameI = element.values[i].TagName;
+                    for (var j = i + 1; j < element.values.length; j++) {
+                        var tagNameJ = element.values[j].TagName
+                        if (!magic[tagNameI]) {
+                            magic[tagNameI] = {};
+                        }
+                        if (magic[tagNameI][tagNameJ]) {
+                            magic[tagNameI][tagNameJ] = magic[tagNameI][tagNameJ] + 1;
+                        } else {
+                            magic[tagNameI][tagNameJ] = 1;
+                        }
+
+                        if (!magic[tagNameJ]) {
+                            magic[tagNameJ] = {};
+                        }
+                        if (magic[tagNameJ][tagNameI]) {
+                            magic[tagNameJ][tagNameI] = magic[tagNameJ][tagNameI] + 1;
+                        } else {
+                            magic[tagNameJ][tagNameI] = 1;
+                        }
+                    }
+                }
+            }
+        });
+
+        var links = [];
+
+        for (var i = 0; i < nodes.length; i++) {
+            var tagNameI = nodes[i];
+            for (var j = i + 1; j < nodes.length; j++) {
+                var tagNameJ = nodes[j];
+                if (magic[tagNameI] && magic[tagNameI][tagNameJ]){
+                    links.push({
+                        source: tagNameI,
+                        target: tagNameJ,
+                        value: magic[tagNameI][tagNameJ]
+                    });
+                }
+            }
+        }
+
+        console.log("nodes");
+        console.log(nodes);
+        console.log("links");
+        console.log(links);
+        console.log("magic");
+        console.log(magic);
+
+        return {
+            nodes: nodes.map(d => ({id: d})),
+            links: links
+        };
+
         // return res;
         // TODO: transform the actual data
         return {
