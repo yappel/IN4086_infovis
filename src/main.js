@@ -25,25 +25,27 @@ window.updateshit = () => {
     });
 }
 
-d3.csv(data_url, (d) => {
-    data = d;
-    data.forEach(data_element => {
-        numeric_value_properties.forEach(id => {
-            data_element[id] = parseInt(data_element[id]);
+window.onload = function() {
+    d3.csv(data_url, (d) => {
+        data = d;
+        data.forEach(data_element => {
+            numeric_value_properties.forEach(id => {
+                data_element[id] = parseInt(data_element[id]);
+            });
         });
-    });
-    var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
-    barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
-    visualisations.push(graph);
-    visualisations.push(barchart);
-
-    window.barchart = barchart;
-    window.visualisations = visualisations;
-    window.data = data;
-
+        // var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
+        // visualisations.push(graph);
+        barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+        visualisations.push(barchart);
     
-    window.updateshit();
-});
+        window.barchart = barchart;
+        window.visualisations = visualisations;
+        window.data = data;
+    
+        
+        window.updateshit();
+    });
+};
 
 
 window.updateBarChart = (val, checked) => {
