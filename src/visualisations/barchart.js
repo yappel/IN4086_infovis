@@ -17,7 +17,10 @@ class BarChart extends BaseVisualisation {
     }
 
     constructor(root, filterChangedCallback, data, options) {
-        super(root, data);
+        super(root, filterChangedCallback);
+
+        var domnode = root.node();
+        var containerSize = domnode.getBoundingClientRect();
 
         this.countsToDisplay = options.countsToDisplay ? options.countsToDisplay : [];
         var margin = {
@@ -26,9 +29,11 @@ class BarChart extends BaseVisualisation {
                 bottom: 70,
                 left: 80
             },
-            width = 1200 - margin.left - margin.right,
-            height = 400 - margin.top - margin.bottom;
+            width = containerSize.width - margin.left - margin.right,
+            height = containerSize.height - margin.top - margin.bottom;
        
+        console.log(width);
+        console.log(height);
         this.height = height;
 
         this.innerScaleBand = d3.scaleBand().padding(0.05);

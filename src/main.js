@@ -20,6 +20,11 @@ var filterCallback = function() {
         vis.update(data, filtered_data, false);
     });
 }
+window.updateshit = () => {
+    visualisations.forEach(vis => {
+        vis.update(data, data, true);
+    });
+}
 
 d3.csv(data_url, (d) => {
     data = d;
@@ -30,6 +35,7 @@ d3.csv(data_url, (d) => {
             }
         });
     });
+
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
     // barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     // visualisations.push(graph);
@@ -45,13 +51,13 @@ d3.csv(data_url, (d) => {
     window.barchart = barchart;
     window.visualisations = visualisations;
     window.data = data;
-
-    
-    visualisations.forEach(vis => {
-        vis.update(data, data, true);
-    });
 });
-var countsToDisplay = ["CommentCount", "OwnerUserIdCount", "AnswerCount", "FavoriteCount"];
+
+
+
+window.updateshit();
+
+
 window.updateBarChart = (val, checked) => {
     if(checked) {
         barchart.enable(val);

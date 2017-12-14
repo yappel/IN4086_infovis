@@ -1,14 +1,15 @@
 import * as d3 from "d3";
 import BaseVisualisation from "./basevisualisation.js";
+
 /**
- * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the 
+ * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the
  * count of posts which have been tagged by both tags making up the edge.
  * Used as explanation of force simulation: https://bl.ocks.org/mbostock/4062045
  */
 class TagGraph extends BaseVisualisation {
 
     /**
-     * Constructor for TagGraph. Appends an svg element to root of specified width and height in options and 
+     * Constructor for TagGraph. Appends an svg element to root of specified width and height in options and
      * creates a d3 ForceSimilated graph in there.
      * @param {*} root - The root html element the visualisation can use
      * @param {*} filterChangedCallback - The function to call when the visualisations filter has changed
@@ -33,18 +34,29 @@ class TagGraph extends BaseVisualisation {
             .attr("class", "links");
         this.nodes = this.svg.append("g")
             .attr("class", "nodes");
+
+        this.selection = {
+            dragBehaviour: d3.drag()
+                .on("start", this.selectionDragStarted.bind(this))
+                .on("end", this.selectionDragEnded.bind(this))
+                .on("drag", this.selectionDragMoved.bind(this)),
+            rectangle: null,
+            minCoords: [],
+            maxCoords: [],
+            selectedTags: []
+        }
+        this.svg.call(this.selection.dragBehaviour);
     }
 
     update(data, filtered_data, data_has_changed = false) {
         super.update(data, filtered_data, data_has_changed);
         // TODO: visualisation
 
-        var data_subset = data;
-        //data.slice(0,21);
+        var data_subset = data.slice(0,21);
         var nested_data = d3.nest()
             .key((d) => d.PostId)
             .entries(data_subset);
-        
+
         var link_data = [];
         var node_data = [];
         this.transformed_data = this.transformData(data);
@@ -73,7 +85,16 @@ class TagGraph extends BaseVisualisation {
 
     filter(data) {
         // TODO: filtering
-        return data;
+        // console.log("Start applying taggraph filter");
+        var filtered = data;
+        if(this.selectedTags.length >0 ) {
+            filtered =  data.filter(d => this.selectedTags.indexOf(d.TagName) >= 0);
+        }
+        console.log("selectedTags", this.selectedTags);
+        // console.log("data", data);
+        // console.log("filtered", filtered);
+        // console.log("Finished applying taggraph filter");
+        return filtered;
     }
 
     ticked() {
@@ -89,66 +110,134 @@ class TagGraph extends BaseVisualisation {
     }
 
     transformData(data) {
-        var posts = {};
-        var nodes = {};
-        data.forEach(d => {
-            var tagid = parseInt(d.TagId);
-            if(!posts[d.PostId]) {
-                posts[d.PostId] = [tagid];
-            } else {
-                posts[d.PostId].push(tagid);
-            }
-            if(!nodes[tagid]) {
-                nodes[tagid] = true;
+        // Aggregate the data per post
+        var nested_data = d3.nest()
+            .key(d => d.PostId)
+            .entries(data);
+        // The nodes per tag
+        var nodes = d3.map(data, d => d.TagName).keys();
+        // Create the matrix indicating the amount of connections between nodes
+        var connection_matrix = {};
+        nested_data.forEach(element => {
+            if (element.values.length > 1) {
+                for (var i = 0; i < element.values.length; i++) {
+                    var tagNameI = element.values[i].TagName;
+                    for (var j = i + 1; j < element.values.length; j++) {
+                        var tagNameJ = element.values[j].TagName
+                        if (!connection_matrix[tagNameI]) {
+                            connection_matrix[tagNameI] = {};
+                        }
+                        if (connection_matrix[tagNameI][tagNameJ]) {
+                            connection_matrix[tagNameI][tagNameJ] = connection_matrix[tagNameI][tagNameJ] + 1;
+                        } else {
+                            connection_matrix[tagNameI][tagNameJ] = 1;
+                        }
+
+                        if (!connection_matrix[tagNameJ]) {
+                            connection_matrix[tagNameJ] = {};
+                        }
+                        if (connection_matrix[tagNameJ][tagNameI]) {
+                            connection_matrix[tagNameJ][tagNameI] = connection_matrix[tagNameJ][tagNameI] + 1;
+                        } else {
+                            connection_matrix[tagNameJ][tagNameI] = 1;
+                        }
+                    }
+                }
             }
         });
-        var links = {};
-        Object.keys(nodes).forEach(postId => {
-            var tags = posts[postId];
-            Object.keys(tags).forEach(tag1 => {
-                tags.forEach(tag2 => {
-                    if(tag1 === tag2) return;
-                    if(links[tag1]) {
-                        if(links[tag1][tag2]) {
-                            links[tag1][tag2] += 1;
-                        } else {
-                            links[tag1][tag2] = 1;
-                        }
-                    } else  if(links[tag2]) {
-                        if(links[tag2][tag1]) {
-                            links[tag2][tag1] += 1;
-                        } else {
-                            links[tag2][tag1] = 1;
-                        }
-                    } else {
-                        links[tag1] = {};
-                        links[tag1][tag2] = 1;
-                    }
-                });
-            });
-        })
-        var res = {
-            nodes: Object.keys(nodes).map(n => ({id:parseInt(n.id)})),
-            links: Object.keys(links).map(t1 => t1.map(t2 => ({source:parseInt(t1),target:parseInt(t2), value:links[t1][t2]}) ))
+        // Create all the links
+        var links = [];
+        for (var i = 0; i < nodes.length; i++) {
+            var tagNameI = nodes[i];
+            for (var j = i + 1; j < nodes.length; j++) {
+                var tagNameJ = nodes[j];
+                if (connection_matrix[tagNameI] && connection_matrix[tagNameI][tagNameJ]){
+                    links.push({
+                        source: tagNameI,
+                        target: tagNameJ,
+                        value: connection_matrix[tagNameI][tagNameJ]
+                    });
+                }
+            }
         }
-        return res;
-        // TODO: transform the actual data
+
         return {
-            nodes: [
-                { id: 1 },
-                { id: 2 },
-                { id: 3 },
-                { id: 4 },
-                { id: 5 }
-            ],
-            links: [
-                { source: 1, target: 2, value: 1 },
-                { source: 1, target: 3, value: 15 },
-                { source: 1, target: 4, value: 10 },
-                { source: 2, target: 3, value: 1 },
-                { source: 3, target: 4, value: 13 }
-            ]
-        }
+            nodes: nodes.map(d => ({id: d})),
+            links: links
+        };
+    }
+
+    /**
+     * Returns true when an object is inside the selection.
+     * @param {Object} node - The object to check if it is in the selection
+     * @param {Number} node.x - The x coordinate of the object
+     * @param {Number} node.y - The y coordinate of the object
+     */
+    isInsideSelection(node) {
+        return (
+            node.x > this.selection.minCoords[0]
+            && node.x < this.selection.maxCoords[0]
+            && node.y > this.selection.minCoords[1]
+            && node.y < this.selection.maxCoords[1]
+        );
+    }
+
+    /**
+     * Callback function for when a drag event is started in the svg.
+     * Updates the selections coordinates and adds a selection visualisation to 
+     * the svg.
+     */
+    selectionDragStarted() {
+        var p = d3.mouse(this.svg.node());
+        this.selection.dragStartCoords = p;
+        this.selection.minCoords = [ p[0], p[1] ];
+        this.selection.maxCoords = [ p[0], p[1] ];
+        this.selection.rectangle = this.svg.append("rect");
+        this.redrawSelectionRectangle();
+    }
+
+    /**
+     * Callback function for a drag moved event. Updates the selection coordinate and 
+     * redraws the selection visualisation for the svg.
+     */
+    selectionDragMoved() {
+        var p = d3.mouse(this.svg.node());
+        this.selection.minCoords[0] = Math.min(this.selection.dragStartCoords[0], p[0]);
+        this.selection.minCoords[1] = Math.min(this.selection.dragStartCoords[1], p[1]);
+        this.selection.maxCoords[0] = Math.max(this.selection.dragStartCoords[0], p[0]);
+        this.selection.maxCoords[1] = Math.max(this.selection.dragStartCoords[1], p[1]);
+        this.redrawSelectionRectangle();
+    }
+
+    /**
+     * Callback function for a drag ended event. Removes the selection visualisation from 
+     * the svg, updates the visualisation of the nodes based on the selection and calls the 
+     * filterChanged function.
+     */
+    selectionDragEnded() {
+        this.selection.rectangle.remove();
+        this.selection.selectedTags = [];
+        this.nodes.selectAll("circle")
+            .attr("fill", d => this.isInsideSelection(d) ? "green" : "red")
+            .each(d => {
+                if (this.isInsideSelection(d)) {
+                    this.selection.selectedTags.push(d.id);
+                }
+            });
+        this.filterChanged();
+    }
+
+    /**
+     * Redraws the selection rectangle in the SVG based on the minimum and maximum coordinates 
+     * of the selection.
+     */
+    redrawSelectionRectangle() {
+        this.selection.rectangle
+            .attr("x", this.selection.minCoords[0])
+            .attr("y", this.selection.minCoords[1])
+            .attr("width", Math.abs(this.selection.maxCoords[0] - this.selection.minCoords[0]))
+            .attr("height", Math.abs(this.selection.maxCoords[1] - this.selection.minCoords[1]))
+            .style("opacity", 0.2);
     }
 }
 
