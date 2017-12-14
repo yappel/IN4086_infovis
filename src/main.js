@@ -25,26 +25,27 @@ window.updateshit = () => {
     });
 }
 
-window.onload = function() {
-    d3.csv(data_url, (d) => {
-        data = d;
-        data.forEach(data_element => {
-            numeric_value_properties.forEach(id => {
-                data_element[id] = parseInt(data_element[id]);
-            });
+d3.csv(data_url, (d) => {
+    data = d;
+    data.forEach(data_element => {
+        numeric_value_properties.forEach(id => {
+            data_element[id] = parseInt(data_element[id]);
         });
     });
+
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
-    //barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+    barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     visualisations.push(graph);
     visualisations.push(barchart);
-
+    
     window.barchart = barchart;
     window.visualisations = visualisations;
     window.data = data;
-    
-    window.updateshit();
-};
+});
+
+
+
+window.updateshit();
 
 
 window.updateBarChart = (val, checked) => {
