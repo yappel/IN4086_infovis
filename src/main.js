@@ -25,11 +25,13 @@ window.updateshit = () => {
     });
 }
 
-d3.csv(data_url, (d) => {
-    data = d;
-    data.forEach(data_element => {
-        numeric_value_properties.forEach(id => {
-            data_element[id] = parseInt(data_element[id]);
+window.onload = function() {
+    d3.csv(data_url, (d) => {
+        data = d;
+        data.forEach(data_element => {
+            numeric_value_properties.forEach(id => {
+                data_element[id] = parseInt(data_element[id]);
+            });
         });
     });
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
@@ -40,13 +42,11 @@ d3.csv(data_url, (d) => {
     window.barchart = barchart;
     window.visualisations = visualisations;
     window.data = data;
-
     
     window.updateshit();
-});
+};
 
 
-var countsToDisplay = ["CommentCount", "OwnerUserIdCount", "AnswerCount", "FavoriteCount"];
 window.updateBarChart = (val, checked) => {
     if(checked) {
         barchart.enable(val);
