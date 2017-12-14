@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import BaseVisualisation from "./basevisualisation.js";
+
 /**
  * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the
  * count of posts which have been tagged by both tags making up the edge.
@@ -15,6 +16,7 @@ class TagGraph extends BaseVisualisation {
         var self = this;
 
         function dragStart() {
+            console.log(this);
             var p = d3.mouse(this);
             self.dragstart = p;
             self.selectionRect = self.svg.append("rect")
@@ -77,8 +79,7 @@ class TagGraph extends BaseVisualisation {
             .on("end", dragEnd);
 
         svg.call(dragBehavior);
-    }
-
+    }   
 
     /**
      * Constructor for TagGraph. Appends an svg element to root of specified width and height in options and
@@ -106,7 +107,18 @@ class TagGraph extends BaseVisualisation {
             .attr("class", "links");
         this.nodes = this.svg.append("g")
             .attr("class", "nodes");
-        this.initSelectionStuff();
+
+        this.selection = {
+            dragBehaviour: d3.drag()
+                .on("start", this.selectionDragStarted.bind(this))
+                .on("end", this.selectionDragEnded.bind(this))
+                .on("drag", this.selectionDragMoved.bind(this)),
+            rectangle: null,
+            minCoords: [],
+            maxCoords: [],
+            selectedTags: []
+        }
+        this.svg.call(this.selection.dragBehaviour);
     }
 
     update(data, filtered_data, data_has_changed = false) {
@@ -159,7 +171,6 @@ class TagGraph extends BaseVisualisation {
     }
 
     ticked() {
-        console.log(new Date());
         this.links.selectAll("line")
             .attr("x1", (d) => d.source.x)
             .attr("y1", (d) => d.source.y)
@@ -227,6 +238,79 @@ class TagGraph extends BaseVisualisation {
             nodes: nodes.map(d => ({id: d})),
             links: links
         };
+    }
+
+    /**
+     * Returns true when an object is inside the selection.
+     * @param {Object} node - The object to check if it is in the selection
+     * @param {Number} node.x - The x coordinate of the object
+     * @param {Number} node.y - The y coordinate of the object
+     */
+    isInsideSelection(node) {
+        return (
+            node.x > this.selection.minCoords[0]
+            && node.x < this.selection.maxCoords[0]
+            && node.y > this.selection.minCoords[1]
+            && node.y < this.selection.maxCoords[1]
+        );
+    }
+
+    /**
+     * Callback function for when a drag event is started in the svg.
+     * Updates the selections coordinates and adds a selection visualisation to 
+     * the svg.
+     */
+    selectionDragStarted() {
+        var p = d3.mouse(this.svg.node());
+        this.selection.dragStartCoords = p;
+        this.selection.minCoords = [ p[0], p[1] ];
+        this.selection.maxCoords = [ p[0], p[1] ];
+        this.selection.rectangle = this.svg.append("rect");
+        this.redrawSelectionRectangle();
+    }
+
+    /**
+     * Callback function for a drag moved event. Updates the selection coordinate and 
+     * redraws the selection visualisation for the svg.
+     */
+    selectionDragMoved() {
+        var p = d3.mouse(this.svg.node());
+        this.selection.minCoords[0] = Math.min(this.selection.dragStartCoords[0], p[0]);
+        this.selection.minCoords[1] = Math.min(this.selection.dragStartCoords[1], p[1]);
+        this.selection.maxCoords[0] = Math.max(this.selection.dragStartCoords[0], p[0]);
+        this.selection.maxCoords[1] = Math.max(this.selection.dragStartCoords[1], p[1]);
+        this.redrawSelectionRectangle();
+    }
+
+    /**
+     * Callback function for a drag ended event. Removes the selection visualisation from 
+     * the svg, updates the visualisation of the nodes based on the selection and calls the 
+     * filterChanged function.
+     */
+    selectionDragEnded() {
+        this.selection.rectangle.remove();
+        this.selection.selectedTags = [];
+        this.nodes.selectAll("circle")
+            .attr("fill", d => this.isInsideSelection(d) ? "green" : "red")
+            .each(d => {
+                if (this.isInsideSelection(d)) {
+                    this.selection.selectedTags.push(d.id);
+                }
+            });
+        this.filterChanged();
+    }
+
+    /**
+     * Redraws the selection rectangle in the SVG based on the minimum and maximum coordinates 
+     * of the selection.
+     */
+    redrawSelectionRectangle() {
+        this.selection.rectangle
+            .attr("x", this.selection.minCoords[0])
+            .attr("y", this.selection.minCoords[1])
+            .attr("width", Math.abs(this.selection.maxCoords[0] - this.selection.minCoords[0]))
+            .attr("height", Math.abs(this.selection.maxCoords[1] - this.selection.minCoords[1]))
+            .style("opacity", 0.2);
     }
 }
 

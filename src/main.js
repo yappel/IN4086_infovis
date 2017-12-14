@@ -33,7 +33,7 @@ d3.csv(data_url, (d) => {
         });
     });
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
-    barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+    //barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     visualisations.push(graph);
     visualisations.push(barchart);
 
