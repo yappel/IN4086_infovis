@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import TagGraph from './visualisations/taggraph.js';
 import BarChart from './visualisations/barchart.js';
 import data_url from '../data/QueryResults.csv';
+import StackedChart from './visualisations/stackedchart.js';
 
 
 var data = [];
@@ -24,13 +25,22 @@ d3.csv(data_url, (d) => {
     data = d;
     data.forEach(data_element => {
         numeric_value_properties.forEach(id => {
+            if(data_element[id]) {
             data_element[id] = parseInt(data_element[id]);
+            }
         });
     });
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
-    barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
-    visualisations.push(graph);
-    visualisations.push(barchart);
+    // barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+    // visualisations.push(graph);
+    // visualisations.push(barchart);
+    console.log(data);
+    visualisations.push(
+        new StackedChart(d3.select("#stackedchart"), 
+                        filterCallback, 
+                        data, 
+                        {})
+    );
 
     window.barchart = barchart;
     window.visualisations = visualisations;
