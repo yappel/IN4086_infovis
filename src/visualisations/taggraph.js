@@ -50,13 +50,9 @@ class TagGraph extends BaseVisualisation {
 
     update(data, filtered_data, data_has_changed = false) {
         super.update(data, filtered_data, data_has_changed);
-        // TODO: visualisation
-
-        var data_subset = data.slice(0,21);
-        var nested_data = d3.nest()
-            .key((d) => d.PostId)
-            .entries(data_subset);
-
+        // When the original data hasnt't changed return
+        if (!data_has_changed) return;
+        // Process the data and update new and existing links and nodes
         var link_data = [];
         var node_data = [];
         this.transformed_data = this.transformData(data);
@@ -84,16 +80,10 @@ class TagGraph extends BaseVisualisation {
     }
 
     filter(data) {
-        // TODO: filtering
-        // console.log("Start applying taggraph filter");
         var filtered = data;
         if(this.selection.selectedTags.length > 0 ) {
             filtered =  data.filter(d => this.selection.selectedTags.indexOf(d.TagName) >= 0);
         }
-        console.log("selectedTags", this.selection.selectedTags);
-        // console.log("data", data);
-        // console.log("filtered", filtered);
-        // console.log("Finished applying taggraph filter");
         return filtered;
     }
 
