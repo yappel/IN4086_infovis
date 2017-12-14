@@ -41,11 +41,11 @@ d3.csv(data_url, (d) => {
     window.barchart = barchart;
     window.visualisations = visualisations;
     window.data = data;
+    window.updateshit();
 });
 
 
 
-window.updateshit();
 
 
 window.updateBarChart = (val, checked) => {

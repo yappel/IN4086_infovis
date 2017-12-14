@@ -32,8 +32,6 @@ class BarChart extends BaseVisualisation {
             width = containerSize.width - margin.left - margin.right,
             height = containerSize.height - margin.top - margin.bottom;
        
-        console.log(width);
-        console.log(height);
         this.height = height;
 
         this.innerScaleBand = d3.scaleBand().padding(0.05);
@@ -88,8 +86,8 @@ class BarChart extends BaseVisualisation {
         /**
          * Updates the domain of the y axis.
          */
-        var updateYAxis = function () {
-            var allcounts = Object.keys(filteredTags).map(tag => countsToDisplay.map(m => filteredTags[tag][m]));
+        var updateYAxis = function (tags) {
+            var allcounts = Object.keys(tags).map(tag => countsToDisplay.map(m => tags[tag][m]));
             var maxy = d3.max([].concat(...allcounts), i=>i);
             yScaleBand.domain( [0, maxy] );
             chart.select(".yAxis").call(yAxis);
@@ -98,7 +96,7 @@ class BarChart extends BaseVisualisation {
         /**
          * Updates the domain of the x axis.
          */
-        var updateXAxis = function () {
+        var updateXAxis = function (tags) {
             xScaleBand.domain(Object.keys(tags).sort());
             chart.select(".xAxis")
                 .call(xAxis)
@@ -115,7 +113,7 @@ class BarChart extends BaseVisualisation {
         /**
          * Updates the amount of bars that should be shown per tag.
          */
-        var updateCountsToDisplay = function () {
+        var updateCountsToDisplay = function (countsToDisplay, xScaleBand) {
             innerScaleBand.domain(countsToDisplay).rangeRound([0, xScaleBand.bandwidth()]);
         }
         
@@ -176,9 +174,9 @@ class BarChart extends BaseVisualisation {
         var colorScheme = this.colorScheme;
         var dataGroup = this.dataGroup;
 
-        updateYAxis();
-        updateXAxis();
-        updateCountsToDisplay();
+        updateYAxis(filteredTags);
+        updateXAxis(filteredTags);
+        updateCountsToDisplay(countsToDisplay, xScaleBand);
         updateBars();
         
         console.log("Data for barChart updated!");
