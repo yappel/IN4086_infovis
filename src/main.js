@@ -37,9 +37,9 @@ d3.csv(data_url, (d) => {
     });
 
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
-    // barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
-    // visualisations.push(graph);
-    // visualisations.push(barchart);
+    barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+    visualisations.push(graph);
+    visualisations.push(barchart);
     console.log(data);
     visualisations.push(
         new StackedChart(d3.select("#stackedchart"), 

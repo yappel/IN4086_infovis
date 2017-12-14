@@ -87,10 +87,10 @@ class TagGraph extends BaseVisualisation {
         // TODO: filtering
         // console.log("Start applying taggraph filter");
         var filtered = data;
-        if(this.selectedTags.length >0 ) {
-            filtered =  data.filter(d => this.selectedTags.indexOf(d.TagName) >= 0);
+        if(this.selection.selectedTags.length > 0 ) {
+            filtered =  data.filter(d => this.selection.selectedTags.indexOf(d.TagName) >= 0);
         }
-        console.log("selectedTags", this.selectedTags);
+        console.log("selectedTags", this.selection.selectedTags);
         // console.log("data", data);
         // console.log("filtered", filtered);
         // console.log("Finished applying taggraph filter");
