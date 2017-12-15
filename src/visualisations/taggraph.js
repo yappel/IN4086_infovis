@@ -17,15 +17,17 @@ class TagGraph extends BaseVisualisation {
      */
     constructor(root, filterChangedCallback, options) {
         super(root, filterChangedCallback);
+        var domnode = root.node();
+        var containerSize = domnode.getBoundingClientRect();
         this.options = {
-            width: 300,
-            height: 300,
+            width: containerSize.width,
+            height: containerSize.height,
             node_radius: 5
         };
         Object.assign(this.options, options);
         this.svg = root.append("svg")
-            .attr("width", this.options.height)
-            .attr("height", this.options.width);
+            .attr("width", this.options.width)
+            .attr("height", this.options.height);
         this.simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id((d) => d.id))
             .force("charge", d3.forceManyBody())
