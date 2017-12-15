@@ -6,19 +6,22 @@
         .main, body, html {width:100%;height: 100%;padding:0;margin:0;}
         .left, .right, .top, .bottom {flex:1}
         .main{display:flex;flex-direction: row;}
-        .left{ background : seagreen;}
+        .left{ background : rgb(255, 255, 255);}
         .right{display:flex;flex-direction: column; background-color: khaki}
-        .top{background-color: firebrick}
-        .bottom{background-color: sienna}
+        .top{background-color: rgb(230, 230, 230)}
+        .bottom{background-color: rgb(240, 240, 240)}
+        .popup-outer{position: absolute; left: 50%;z-index: 10}
+        .popup-inner{position: relative; left: -50%; }
+        #barchart-options { background:#293133;opacity:0.8;color: #e2e2e2;width: 190px; height: 178px; top: -218px;
+          padding: 20px; 
+          -webkit-transition: top .3s, -webkit-transform .3s;
+          transition: top .3s, transform .3s;}
       </style>
     </head>
-  <body class="main"> 
-    <div class="left">
-        <div id="taggraph"></div>
-    </div>
-    <div class="right">
-        <div id='stackedchart'></div>
-      <div class="top">
+  <body > 
+
+    <div class="popup-outer"  >
+      <div class="popup-inner" id="barchart-options" >
           <fieldset>
               <legend>Choose what counts to show in the bar chart </legend>
               <div>
@@ -47,18 +50,42 @@
               </div>
             </fieldset>
       </div>
-      <div class="bottom">
-          <div id="barchart" style="width:100%;height:100%;">
-             
-            </div>
+    </div>    
+    <div class="main">
+      <div class="left">
+        <div id="taggraph"></div>
       </div>
-
+      <div class="right">
+        <div id='stackedchart'></div>
+        <div class="top">
+          
+        </div>
+        <div class="bottom">
+          <button style="position:absolute;right:0" onclick="toggleBarchartOptions()">Show/hide options</button>
+          <script>
+            var optionsVisible = false;
+            function toggleBarchartOptions() {
+              var elem = document.getElementById("barchart-options");
+              if(optionsVisible) {
+                optionsVisible = false;
+                elem.style.top = -1.1 * elem.getBoundingClientRect().height + "px";
+              } else {
+                optionsVisible = true;
+                elem.style.top = 0;
+              }
+            }
+            </script> 
+         <div id="barchart" style="width:100%;height:100%;">
+           
+        </div>
+      </div>
     </div>
+  </div>
     
     
     
     
-
+    
     
   </body>
-</html>
+  </html>

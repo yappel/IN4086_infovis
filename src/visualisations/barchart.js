@@ -28,7 +28,7 @@ class BarChart extends BaseVisualisation {
         var margin = {
                 top: 20,
                 right: 20,
-                bottom: 70,
+                bottom: 95,
                 left: 80
             },
             width = containerSize.width - margin.left - margin.right,
@@ -107,13 +107,12 @@ class BarChart extends BaseVisualisation {
         var self = this;
         var tags = this.tags;
         var groups = self.dataGroup.selectAll("g").data(Object.values(tags));
-        // console.log(groups.enter().size(),groups.size(),groups.exit().size())
         
         groups.exit().remove();
         var merged = groups.enter().append("g").merge(groups);
         merged.attr("transform", (d) => `translate(${self.xScaleBand(d.TagName)},0)`);
         var bars = merged.selectAll("rect")
-        .data((d) => {console.log(self.countsToDisplay.map(m => ({measure:m, count :d[m]}))); return self.countsToDisplay.map(m => ({measure:m, count :d[m]}))});
+        .data((d) => {return self.countsToDisplay.map(m => ({measure:m, count :d[m]}))});
     
         bars.transition()
             .attr("width", self.innerScaleBand.bandwidth())
@@ -138,8 +137,6 @@ class BarChart extends BaseVisualisation {
                 .attr("y", (d) => self.height)
                 .remove();
         
-        // console.log(bars.enter().size(),bars.size(),bars.exit().size())
-
     }
 
     updateXAxis() {
