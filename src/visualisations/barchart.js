@@ -7,6 +7,7 @@ class BarChart extends BaseVisualisation {
         if(i === -1) {
             this.countsToDisplay.push(metricName);
         }
+        this.updateCountsDisplayed();
     }
 
     disable(metricName) {
@@ -14,6 +15,7 @@ class BarChart extends BaseVisualisation {
         if(i > -1) {
             this.countsToDisplay.splice(i,1);
         }
+        this.updateCountsDisplayed();
     }
 
     constructor(root, filterChangedCallback, data, options) {
@@ -83,101 +85,15 @@ class BarChart extends BaseVisualisation {
     }
 
     update(data, filtered_data, data_has_changed = false) {
-        /**
-         * Updates the domain of the y axis.
-         */
-        var updateYAxis = function (tags) {
-            var allcounts = Object.keys(tags).map(tag => countsToDisplay.map(m => tags[tag][m]));
-            var maxy = d3.max([].concat(...allcounts), i=>i);
-            yScaleBand.domain( [0, maxy] );
-            chart.select(".yAxis").call(yAxis);
-        };
-
-        /**
-         * Updates the domain of the x axis.
-         */
-        var updateXAxis = function (tags) {
-            xScaleBand.domain(Object.keys(tags).sort());
-            chart.select(".xAxis")
-                .call(xAxis)
-                .selectAll("text")
-                    .style("text-anchor", "end")
-                    .style("font-size", "1.5em")
-                    .attr("dx", "-.8em")
-                    .attr("dy", ".15em")
-                    .attr("transform", function(d){
-                        return "rotate(-65)";
-                    });;
-        };
-
-        /**
-         * Updates the amount of bars that should be shown per tag.
-         */
-        var updateCountsToDisplay = function (countsToDisplay, xScaleBand) {
-            innerScaleBand.domain(countsToDisplay).rangeRound([0, xScaleBand.bandwidth()]);
-        }
-        
-        /**
-         * Update the bars of the bar chart.
-         */
-        var updateBars = function () {
-            dataGroup.selectAll("g")
-                .data(Object.values(filteredTags))
-                .enter().append("g")
-                    .attr("transform", (d) => `translate(${xScaleBand(d.TagName)},0)`);
-            
-            var bars = dataGroup.selectAll("g").selectAll("rect")
-                .data((d) => {return countsToDisplay.map(m => ({measure:m, count :d[m]}))})
-            
-            bars.transition()
-                .attr("width", innerScaleBand.bandwidth())
-                .attr("height", (d) => height - yScaleBand(d.count))
-                .attr("fill", (d) => colorScheme(d.measure))
-                .attr("y", (d) => yScaleBand(d.count))
-                .attr("x", (d) =>innerScaleBand(d.measure));
-            bars.enter().append("rect")
-                    .style("opacity", "0")
-                    .attr("fill", (d) => colorScheme(d.measure))
-                    .attr("x", (d) =>innerScaleBand(d.measure))
-                    .attr("y", (d) => height)
-                    .attr("height", (d) => 0)
-                    .transition()
-                    .style("opacity", "1")
-                    .attr("y", (d) => yScaleBand(d.count))
-                    .attr("width", innerScaleBand.bandwidth())
-                    .attr("height", (d) => height - yScaleBand(d.count))
-                bars.merge(bars)
-                    
-
-            bars.exit().transition()
-                .style("opacity", "0")
-                .attr("height", (d) => 0)
-                .attr("y", (d) => height)
-                .remove();
-        }
-       
-
-
         super.update(data, filtered_data, data_has_changed);
-        console.log("Updating data for barchart...");
-        var tags = this.transformData(data);
-        var filteredTags = this.transformData(filtered_data);
+        console.log(`[ data.length : ${data.length}, filtered_data.length : ${filtered_data.length} ] ` + "Updating data for barchart...");
+        this.tags = this.transformData(filtered_data);
+        // var filteredTags = this.transformData(filtered_data);
 
-        var countsToDisplay = this.countsToDisplay;
-        var height = this.height;
-        var yAxis = this.yAxis;
-        var xAxis = this.xAxis;
-        var chart = this.svg;
-        var yScaleBand  = this.yScaleBand   ;
-        var xScaleBand = this.xScaleBand;
-        var innerScaleBand = this.innerScaleBand;
-        var colorScheme = this.colorScheme;
-        var dataGroup = this.dataGroup;
+        var self = this;
 
-        updateYAxis(filteredTags);
-        updateXAxis(filteredTags);
-        updateCountsToDisplay(countsToDisplay, xScaleBand);
-        updateBars();
+        this.updateXAxis();
+        this.updateCountsDisplayed();
         
         console.log("Data for barChart updated!");
     }
@@ -185,6 +101,82 @@ class BarChart extends BaseVisualisation {
     filter(data) {
         // TODO: filtering
         return data;
+    }
+
+    updateBars() {
+        var self = this;
+        var tags = this.tags;
+        var groups = self.dataGroup.selectAll("g").data(Object.values(tags));
+        // console.log(groups.enter().size(),groups.size(),groups.exit().size())
+        
+        groups.exit().remove();
+        var merged = groups.enter().append("g").merge(groups);
+        merged.attr("transform", (d) => `translate(${self.xScaleBand(d.TagName)},0)`);
+        var bars = merged.selectAll("rect")
+        .data((d) => {console.log(self.countsToDisplay.map(m => ({measure:m, count :d[m]}))); return self.countsToDisplay.map(m => ({measure:m, count :d[m]}))});
+    
+        bars.attr("width", self.innerScaleBand.bandwidth())
+            .attr("height", (d) => self.height - self.yScaleBand(d.count))
+            .attr("fill", (d) => self.colorScheme(d.measure))
+            .attr("y", (d) => self.yScaleBand(d.count))
+            .attr("x", (d) => self.innerScaleBand(d.measure));
+        
+        bars.transition()
+            .attr("width", self.innerScaleBand.bandwidth())
+            .attr("height", (d) => self.height - self.yScaleBand(d.count))
+            .attr("fill", (d) => self.colorScheme(d.measure))
+            .attr("y", (d) => self.yScaleBand(d.count))
+            .attr("x", (d) => self.innerScaleBand(d.measure));
+        bars.enter().append("rect")
+                .style("opacity", "0")
+                .attr("fill", (d) => self.colorScheme(d.measure))
+                .attr("x", (d) => self.innerScaleBand(d.measure))
+                .attr("y", (d) => self.height)
+                .attr("height", (d) => 0)
+                .transition()
+                .style("opacity", "1")
+                .attr("y", (d) => self.yScaleBand(d.count))
+                .attr("width", self.innerScaleBand.bandwidth())
+                .attr("height", (d) => self.height - self.yScaleBand(d.count));
+        bars.exit().transition()
+                .style("opacity", "0")
+                .attr("height", (d) => 0)
+                .attr("y", (d) => self.height)
+                .remove();
+        
+        // console.log(bars.enter().size(),bars.size(),bars.exit().size())
+
+    }
+
+    updateXAxis() {
+        var self = this;
+        var tags = this.tags;
+        self.xScaleBand.domain(Object.keys(tags).sort());
+        self.svg.select(".xAxis")
+            .call(self.xAxis)
+            .selectAll("text")
+                .style("text-anchor", "end")
+                .style("font-size", "1.5em")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", function(d){
+                    return "rotate(-65)";
+                });;
+    };
+
+    updateYAxis() {
+        var self = this;
+        var tags = this.tags;
+        var allcounts = Object.keys(tags).map(tag => self.countsToDisplay.map(m => tags[tag][m]));
+        var maxy = d3.max([].concat(...allcounts), i=>i);
+        self.yScaleBand.domain( [0, maxy] );
+        self.svg.select(".yAxis").call(self.yAxis);
+    };
+
+    updateCountsDisplayed() {
+        this.innerScaleBand.domain(this.countsToDisplay).rangeRound([0, this.xScaleBand.bandwidth()]);
+        this.updateYAxis();
+        this.updateBars();
     }
 
 
