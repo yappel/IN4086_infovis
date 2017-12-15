@@ -37,7 +37,6 @@ d3.csv(data_url, (d) => {
             }
         });
     });
-    console.log(d3.select("#taggraph").node().getBoundingClientRect());
     
     barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     visualisations.push(barchart);
