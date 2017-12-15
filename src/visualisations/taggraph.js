@@ -71,7 +71,10 @@ class TagGraph extends BaseVisualisation {
             .enter().append("circle")
                 .attr("r", this.options.node_radius)
                 .attr("fill", (d) => "#ff0000") // TODO: change colour based on ID
-                //.call(...) TODO: logic for interaction
+                .call(d3.drag()
+                    .on("start", this.nodeDragStarted.bind(this))
+                    .on("drag", this.nodeDragMoved.bind(this))
+                    .on("end", this.nodeDragEnded.bind(this)));
             // TODO: update, exit
         this.simulation
             .nodes(this.transformed_data.nodes)
@@ -99,6 +102,36 @@ class TagGraph extends BaseVisualisation {
         this.nodes.selectAll("circle")
             .attr("cx", (d) => d.x)
             .attr("cy", (d) => d.y);
+    }
+
+    /**
+     * Callback function for a node when a drag is started on it.
+     * @param {Object} node - The node which is dragged
+     */
+    nodeDragStarted(node) {
+        // Determince alpha target
+        if (!d3.event.active) this.simulation.alphaTarget(0.3).restart();
+        node.fx = node.x;
+        node.fy = node.y;
+    }
+
+    /**
+     * Callback function for a node when a drag is moved.
+     * @param {Object} node - The node which is dragged
+     */
+    nodeDragMoved(node) {
+        node.fx = d3.event.x;
+        node.fy = d3.event.y;
+    }
+
+    /**
+     * Callback function for a node when the dragging has stopped for this node.
+     * @param {Object} node - The node which is dragged
+     */
+    nodeDragEnded(node) {
+        if (!d3.event.active) this.simulation.alphaTarget(0);
+        node.fx = null;
+        node.fy = null;
     }
 
     transformData(data) {
