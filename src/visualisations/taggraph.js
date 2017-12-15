@@ -226,6 +226,7 @@ class TagGraph extends BaseVisualisation {
      * redraws the selection visualisation for the svg.
      */
     selectionDragMoved() {
+        this.simulation.tick(); // Fix the simulation being stopped and having changed all the coordinates of the nodes
         var p = d3.mouse(this.svg.node());
         this.selection.minCoords[0] = Math.min(this.selection.dragStartCoords[0], p[0]);
         this.selection.minCoords[1] = Math.min(this.selection.dragStartCoords[1], p[1]);
