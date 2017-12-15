@@ -115,12 +115,6 @@ class BarChart extends BaseVisualisation {
         var bars = merged.selectAll("rect")
         .data((d) => {console.log(self.countsToDisplay.map(m => ({measure:m, count :d[m]}))); return self.countsToDisplay.map(m => ({measure:m, count :d[m]}))});
     
-        bars.attr("width", self.innerScaleBand.bandwidth())
-            .attr("height", (d) => self.height - self.yScaleBand(d.count))
-            .attr("fill", (d) => self.colorScheme(d.measure))
-            .attr("y", (d) => self.yScaleBand(d.count))
-            .attr("x", (d) => self.innerScaleBand(d.measure));
-        
         bars.transition()
             .attr("width", self.innerScaleBand.bandwidth())
             .attr("height", (d) => self.height - self.yScaleBand(d.count))
