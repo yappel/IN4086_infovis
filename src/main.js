@@ -48,7 +48,7 @@ d3.csv(data_url, (d) => {
     visualisations.push(stackedchart);
 
     window.barchart = barchart;
-    wndow.taggraph = graph;
+    window.taggraph = graph;
     window.stackedchart = stackedchart;
     window.visualisations = visualisations;
     window.data = data;
