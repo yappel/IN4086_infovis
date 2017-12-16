@@ -29,9 +29,10 @@ class TagGraph extends BaseVisualisation {
             .attr("width", this.options.width)
             .attr("height", this.options.height);
         this.simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id((d) => d.id))
-            .force("charge", d3.forceManyBody())
-            .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2));
+            .force("link", d3.forceLink().id((d) => d.id).distance(55))
+            .force("charge", d3.forceManyBody().strength(-1 * this.options.height))
+            .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2))
+            ;
         this.links = this.svg.append("g")
             .attr("class", "links");
         this.nodes = this.svg.append("g")
