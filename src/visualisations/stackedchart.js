@@ -6,13 +6,16 @@ class StackedChart extends BaseVisualisation {
         super(root, filterCallback);
         this.svg = root.append("svg");
 
+        var domnode = root.node();
+        var containerSize = domnode.getBoundingClientRect();
+
         var margin = { top: 20, right: 20, bottom: 30, left: 50 },
-            width = 600 - margin.left - margin.right,
-            height = 300 - margin.top - margin.bottom;
+            width = containerSize.width - margin.left - margin.right,
+            height = containerSize.height - margin.top - margin.bottom;
 
         this.svg.attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom);
-        
+            .attr("height", height + margin.top + margin.bottom);
+
 
         var x = d3.scaleTime().range([0, width]),
             y = d3.scaleLinear().range([height, 0]),
@@ -35,32 +38,42 @@ class StackedChart extends BaseVisualisation {
         this.z = z;
         this.width = width;
         this.height = height;
-
-        console.log(this);
     }
 
     update(data, filtered_data, data_has_changed = false) {
-
         super.update(data, filtered_data, data_has_changed);
 
-        var totalCount = this.totalCount;
+        data = this.transformData(filtered_data);
 
-        data.forEach(c => c.date = d3.timeParse("%Y-%m-%d")(c.date));
-        
-        var getCountableKeys = function(countsObject) {
+        var getCountableKeys = function (countsObject) {
             return Object.keys(countsObject).filter(k => k !== "date");
         }
 
-        var getSum = function(countsObject) {
-            return getCountableKeys(countsObject).map(k => countsObject[k]).reduce( (sum,curr) => sum + parseInt(curr) ,0 );
+        var getSum = function (countsObject) {
+            return getCountableKeys(countsObject).map(k => countsObject[k]).reduce((sum, curr) => sum + parseInt(curr), 0);
         }
-
+        
         var sums = {};
         data.forEach(countObject => sums[countObject.date] = getSum(countObject));
-        data.forEach(countObject => getCountableKeys(countObject).
-            forEach((k) => countObject[k] = parseInt(countObject[k]) / sums[countObject.date]) );
-        
-        var keys = data.columns.slice(1);
+        data.forEach(
+            countObject => getCountableKeys(countObject).forEach(
+                (k) => countObject[k] = parseInt(countObject[k]) / sums[countObject.date]
+            )
+        );
+
+        var keys = [];
+        data.forEach(
+            countObject => {
+                keys = getCountableKeys(countObject);
+                keys.forEach(
+                    (k) => {
+                        if (keys.indexOf(k) === -1) keys.push(k);
+                    }
+                )
+            }
+        );
+
+        // console.log(keys);
 
         var x = this.x,
             y = this.y,
@@ -71,16 +84,11 @@ class StackedChart extends BaseVisualisation {
             area = this.area,
             stack = this.stack;
 
-        console.log("data");
-        console.log(data);
 
         x.domain(d3.extent(data, function (d) { return d.date; }));
         y.domain([0, this.scaleFactor]);
         z.domain(keys);
         stack.keys(keys);
-
-        console.log("stack");
-        console.log(stack);
 
         var layer = g.selectAll(".layer")
             .data(stack(data))
@@ -91,9 +99,6 @@ class StackedChart extends BaseVisualisation {
             .attr("class", "area")
             .style("fill", function (d) { return z(d.key); })
             .attr("d", area);
-
-        console.log("layer");
-        console.log(layer);
 
         layer.filter(function (d) { return d[d.length - 1][1] - d[d.length - 1][0] > 0.01; })
             .append("text")
@@ -115,6 +120,27 @@ class StackedChart extends BaseVisualisation {
 
     }
 
+    transformData(data) {
+        var countsPerMonth = {};
+        data.forEach(function (d, i) {
+            var month = d.CreationDate.slice(0, 7);
+            if (!countsPerMonth[month]) {
+                // countsPerMonth.push(month);
+                // if (i < 5) sconsole.log(countsPerMonth[month]);
+                countsPerMonth[month] = { date: d3.timeParse("%Y-%m")(month) };
+            }
+            if (isNaN(countsPerMonth[month][d.TagName])) {
+                countsPerMonth[month][d.TagName] = 1;
+                // console.log(i + ", [" + month + "][" + d.TagName + "] = " + countsPerMonth[month][d.TagName]);
+            } else {
+                countsPerMonth[month][d.TagName] += 1;
+                // console.log(i + ", [" + month + "][" + d.TagName + "] = " + countsPerMonth[month][d.TagName]);
+            }
+        });
+
+
+        return Object.values(countsPerMonth);;
+    }
 
 }
 

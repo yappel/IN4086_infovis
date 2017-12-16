@@ -12,7 +12,7 @@ var barchart;
 
 var numeric_value_properties = ["Count", "Score", "ViewCount", "AnswerCount", "CommentCount", "FavoriteCount"];
 
-var filterCallback = function() {
+var filterCallback = function () {
     filtered_data = data;
     visualisations.forEach(vis => {
         filtered_data = vis.filter(filtered_data);
@@ -32,25 +32,24 @@ d3.csv(data_url, (d) => {
     filtered_data = d;
     data.forEach(data_element => {
         numeric_value_properties.forEach(id => {
-            if(data_element[id]) {
-            data_element[id] = parseInt(data_element[id]);
+            if (data_element[id]) {
+                data_element[id] = parseInt(data_element[id]);
             }
         });
     });
-    
+
     barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
     visualisations.push(barchart);
+
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
     visualisations.push(graph);
-    // console.log(data);
-    // visualisations.push(
-    //     new StackedChart(d3.select("#stackedchart"), 
-    //                     filterCallback, 
-    //                     data, 
-    //                     {})
-    // );
-    window.taggraph = graph;
+     
+    var stackedchart = new StackedChart(d3.select("#stackedchart"), filterCallback, data,{});
+    visualisations.push(stackedchart);
+
     window.barchart = barchart;
+    wndow.taggraph = graph;
+    window.stackedchart = stackedchart;
     window.visualisations = visualisations;
     window.data = data;
     window.updateshit();
@@ -61,7 +60,7 @@ d3.csv(data_url, (d) => {
 
 
 window.updateBarChart = (val, checked) => {
-    if(checked) {
+    if (checked) {
         barchart.enable(val);
     }
     else {
