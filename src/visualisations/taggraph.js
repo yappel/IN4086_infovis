@@ -64,8 +64,9 @@ class TagGraph extends BaseVisualisation {
             .data(this.transformed_data.links)
             .enter().append("line")
                 .attr("stroke-width", (d) => Math.sqrt(d.value)) // TODO: other function for weight
-                .attr("stroke", (d) => "#0000ff"); // TODO: derive colour from value
-            // TODO: update, exit
+                .attr("stroke", (d) => "#0000ff") // TODO: derive colour from value
+                .style("opacity",(d) => Math.sqrt(d.value)/10);
+                // TODO: update, exit
 
         this.nodes.selectAll("circle")
             .data(this.transformed_data.nodes)
