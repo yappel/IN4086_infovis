@@ -32,7 +32,7 @@ class TagGraph extends BaseVisualisation {
             .force("link", d3.forceLink().id((d) => d.id))
             .force("charge", d3.forceManyBody()
                 .strength(-0.3 * Math.min(this.options.height,this.options.width))
-                .distanceMax([Math.min(this.options.height,this.options.width)]))  
+                .distanceMax([Math.min(this.options.height,this.options.width)]))
             .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2))
             ;
         this.links = this.svg.append("g")
@@ -54,9 +54,10 @@ class TagGraph extends BaseVisualisation {
     }
 
     update(data, filtered_data, data_has_changed = false) {
+        console.log("Updating data for taggraph")
         super.update(data, filtered_data, data_has_changed);
         // When the original data hasnt't changed return
-        if (!data_has_changed) return;
+        // if (!data_has_changed) return;
         // Process the data and update new and existing links and nodes
         var link_data = [];
         var node_data = [];
@@ -73,31 +74,75 @@ class TagGraph extends BaseVisualisation {
                 .style("opacity",(d) => weightScale(d.value));
                 // TODO: update, exit
 
-        var nodesEnter = this.nodes.selectAll("circle")
-            .data(this.transformed_data.nodes)
+        var nodesSelect = this.nodes.selectAll("circle")
+            .data(this.transformed_data.nodes);
+        var nodesEnter = nodesSelect
             .enter().append("g")
                .call(d3.drag()
                     .on("start", this.nodeDragStarted.bind(this))
                     .on("drag", this.nodeDragMoved.bind(this))
                     .on("end", this.nodeDragEnded.bind(this)));
-            // TODO: update, exit
+        //     // TODO: update, exit
+        var radius = this.options.node_radius;
         nodesEnter.append("circle")
-            .attr("r", this.options.node_radius)
-            .attr("fill", (d) => "#ff0000") // TODO: change colour based on ID
-     
+            .on("mouseover", (item) => {
+                var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
+                el.transition()
+                .attr("oldfill",el.attr("fill"))
+                .attr("fill", "orange").attr("r", radius * 2)
+                .attr("r", 2* radius);
+            })
+            .on("mouseout", (item) => {
+                var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
+                el.transition().attr(
+                    "fill", el.attr("oldfill")
+                ).attr("r", radius)
+            })
+            .on("click", (item) => {
+                var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
+                var tags = this.selection.selectedTags;
+                var index = tags.indexOf(item.id);
+                if(index >= 0) {
+                    tags.splice(index, 1);;
+                } else {
+                    tags.push(item.id);
+                }
+                el.attr("fill", d => this.getCircleColor(d,null))
+                .attr("oldfill",  d => this.getCircleColor(d,null));
+                this.filterChanged(this);
+            })
+            .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
+            .attr("r", radius);
+
         nodesEnter.append("text")
             .attr("dx", 12)
             .attr("dy", ".35em")
+            .style("color", "black")
             .text(function(d) { return d.id })
-        this.simulation
+
+        if(nodesEnter.size() > 0) {
+            console.log("calling this.simulation")
+            this.simulation
             .nodes(this.transformed_data.nodes)
             .on("tick", this.ticked.bind(this))
 
-        
-        
-        this.simulation
-            .force("link").strength(d=>{return weightScale(d.value)})
-            .links(this.transformed_data.links);
+            this.simulation
+                .force("link").strength(d=>{return weightScale(d.value)})
+                .links(this.transformed_data.links);
+        }
+
+    }
+
+    getCircleColor(d, selectedTags = null) {
+        if(!selectedTags && this.selection) {
+            selectedTags = this.selection.selectedTags
+        }
+        var defaultColor = "red";
+        var selectedColor = "green";
+        if(selectedTags) {
+            return selectedTags.indexOf(d.id) >= 0 ? selectedColor : defaultColor;
+        }
+        return defaultColor;
     }
 
     filter(data) {
@@ -228,7 +273,7 @@ class TagGraph extends BaseVisualisation {
 
     /**
      * Callback function for when a drag event is started in the svg.
-     * Updates the selections coordinates and adds a selection visualisation to 
+     * Updates the selections coordinates and adds a selection visualisation to
      * the svg.
      */
     selectionDragStarted() {
@@ -241,7 +286,7 @@ class TagGraph extends BaseVisualisation {
     }
 
     /**
-     * Callback function for a drag moved event. Updates the selection coordinate and 
+     * Callback function for a drag moved event. Updates the selection coordinate and
      * redraws the selection visualisation for the svg.
      */
     selectionDragMoved() {
@@ -255,25 +300,27 @@ class TagGraph extends BaseVisualisation {
     }
 
     /**
-     * Callback function for a drag ended event. Removes the selection visualisation from 
-     * the svg, updates the visualisation of the nodes based on the selection and calls the 
+     * Callback function for a drag ended event. Removes the selection visualisation from
+     * the svg, updates the visualisation of the nodes based on the selection and calls the
      * filterChanged function.
      */
     selectionDragEnded() {
         this.selection.rectangle.remove();
         this.selection.selectedTags = [];
         this.nodes.selectAll("circle")
-            .attr("fill", d => this.isInsideSelection(d) ? "green" : "red")
             .each(d => {
                 if (this.isInsideSelection(d)) {
                     this.selection.selectedTags.push(d.id);
                 }
             });
-        this.filterChanged();
+        this.nodes.selectAll("circle")
+            .transition()
+            .attr("fill", d => this.getCircleColor(d,this.selection.selectedTags));
+        this.filterChanged(this);
     }
 
     /**
-     * Redraws the selection rectangle in the SVG based on the minimum and maximum coordinates 
+     * Redraws the selection rectangle in the SVG based on the minimum and maximum coordinates
      * of the selection.
      */
     redrawSelectionRectangle() {

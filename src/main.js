@@ -12,13 +12,14 @@ var barchart;
 
 var numeric_value_properties = ["Count", "Score", "ViewCount", "AnswerCount", "CommentCount", "FavoriteCount"];
 
-var filterCallback = function () {
+var filterCallback = function (initiator) {
     filtered_data = data;
     visualisations.forEach(vis => {
         filtered_data = vis.filter(filtered_data);
     });
     visualisations.forEach(vis => {
-        vis.update(data, filtered_data, data.length === filtered_data.length);
+        if(vis === initiator) return;
+        vis.update(data, filtered_data, false);
     });
 }
 window.updateshit = () => {

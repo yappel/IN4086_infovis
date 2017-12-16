@@ -40,8 +40,8 @@ class BaseVisualisation {
     /**
      * Called when the filter has changed.
      */
-    filterChanged() {
-        this.callback();
+    filterChanged(initiator) {
+        this.callback(initiator);
     }
 }
 
