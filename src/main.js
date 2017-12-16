@@ -49,7 +49,7 @@ d3.csv(data_url, (d) => {
     //                     data, 
     //                     {})
     // );
-
+    window.taggraph = graph;
     window.barchart = barchart;
     window.visualisations = visualisations;
     window.data = data;
