@@ -73,16 +73,22 @@ class TagGraph extends BaseVisualisation {
                 .style("opacity",(d) => weightScale(d.value));
                 // TODO: update, exit
 
-        this.nodes.selectAll("circle")
+        var nodesEnter = this.nodes.selectAll("circle")
             .data(this.transformed_data.nodes)
-            .enter().append("circle")
-                .attr("r", this.options.node_radius)
-                .attr("fill", (d) => "#ff0000") // TODO: change colour based on ID
-                .call(d3.drag()
+            .enter().append("g")
+               .call(d3.drag()
                     .on("start", this.nodeDragStarted.bind(this))
                     .on("drag", this.nodeDragMoved.bind(this))
                     .on("end", this.nodeDragEnded.bind(this)));
             // TODO: update, exit
+        nodesEnter.append("circle")
+            .attr("r", this.options.node_radius)
+            .attr("fill", (d) => "#ff0000") // TODO: change colour based on ID
+     
+        nodesEnter.append("text")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.id })
         this.simulation
             .nodes(this.transformed_data.nodes)
             .on("tick", this.ticked.bind(this))
@@ -112,6 +118,9 @@ class TagGraph extends BaseVisualisation {
         this.nodes.selectAll("circle")
             .attr("cx", (d) => d.x)
             .attr("cy", (d) => d.y);
+        this.nodes.selectAll("text")
+            .attr("dx", (d) => d.x + 10)
+            .attr("dy", (d) => d.y + 5);
     }
 
     /**
