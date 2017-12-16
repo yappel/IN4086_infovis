@@ -29,8 +29,10 @@ class TagGraph extends BaseVisualisation {
             .attr("width", this.options.width)
             .attr("height", this.options.height);
         this.simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id((d) => d.id).distance(55))
-            .force("charge", d3.forceManyBody().strength(-1 * this.options.height))
+            .force("link", d3.forceLink().id((d) => d.id))
+            .force("charge", d3.forceManyBody()
+                .strength(-0.3 * Math.min(this.options.height,this.options.width))
+                .distanceMax([Math.min(this.options.height,this.options.width)]))  
             .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2))
             ;
         this.links = this.svg.append("g")
@@ -59,13 +61,16 @@ class TagGraph extends BaseVisualisation {
         var link_data = [];
         var node_data = [];
         this.transformed_data = this.transformData(data);
+        var weightScale = d3.scaleLinear()
+            .domain(d3.extent(this.transformed_data.links, function (d) { return Math.pow(d.value,1) }))
+            .range([.01, 1]);
 
         this.links.selectAll("line")
             .data(this.transformed_data.links)
             .enter().append("line")
                 .attr("stroke-width", (d) => Math.sqrt(d.value)) // TODO: other function for weight
                 .attr("stroke", (d) => "#0000ff") // TODO: derive colour from value
-                .style("opacity",(d) => Math.sqrt(d.value)/10);
+                .style("opacity",(d) => weightScale(d.value));
                 // TODO: update, exit
 
         this.nodes.selectAll("circle")
@@ -81,8 +86,11 @@ class TagGraph extends BaseVisualisation {
         this.simulation
             .nodes(this.transformed_data.nodes)
             .on("tick", this.ticked.bind(this))
+
+        
+        
         this.simulation
-            .force("link")
+            .force("link").strength(d=>{return weightScale(d.value)})
             .links(this.transformed_data.links);
     }
 
