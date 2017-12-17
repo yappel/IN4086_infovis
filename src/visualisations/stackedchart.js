@@ -16,7 +16,6 @@ class StackedChart extends BaseVisualisation {
         this.svg.attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom);
 
-
         var x = d3.scaleTime().range([0, width]),
             y = d3.scaleLinear().range([height, 0]),
             z = d3.scaleOrdinal(d3.schemeCategory10);
@@ -31,6 +30,15 @@ class StackedChart extends BaseVisualisation {
         this.g = this.svg.append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+        var radiobutton = 0;
+        //BUG if I don't load the application in full 
+        //screen this does not work
+        this.svg.style("pointer-events", "visible")
+            .on('click', function () {
+                radiobutton = (radiobutton + 1) % 3;
+            });
+
+        this.radiobutton = radiobutton;
         this.totalCount = 1;
         this.scaleFactor = 1;
         this.x = x;
@@ -38,42 +46,59 @@ class StackedChart extends BaseVisualisation {
         this.z = z;
         this.width = width;
         this.height = height;
+        this.tags = [];
+
+        var count = 0;
     }
 
-    update(data, filtered_data, data_has_changed = false) {
+    update(data, filtered_data, data_has_changed = false, tags = []) {
         super.update(data, filtered_data, data_has_changed);
+
+        var yMax = 1;
+        var yTicks = [10, "%"];
+
+        //I need to implement a radiobutton about what to show:
+        var radiobutton = 2;
+        console.log(radiobutton);
+
+        this.tags = tags.length < 1 ? this.standardKeys(data, 5) : tags;
+
+        // if (!this.options.zoomed_percentage) this.tags.unshift("rest");
+        console.log(this.tags);
 
         data = this.transformData(filtered_data);
 
-        var getCountableKeys = function (countsObject) {
-            return Object.keys(countsObject).filter(k => k !== "date");
+        switch (radiobutton) {
+            //Percentages, show 100%
+            case 0:
+                this.tags.push("rest");
+                data = this.scaleData(data);
+                yMax = this.maxCount(data);
+                this.tags.pop();
+                break;
+            //Percentages, show zoomed
+            case 1:
+                data = this.scaleData(data);
+                yMax = this.maxCount(data);
+                break;
+            //Number of posts
+            case 2:
+                this.tags.push("rest");
+                yMax = this.maxCount(data);
+                yTicks = [10, "d"];
+
+                break;
         }
+        console.log(data);
 
-        var getSum = function (countsObject) {
-            return getCountableKeys(countsObject).map(k => countsObject[k]).reduce((sum, curr) => sum + parseInt(curr), 0);
-        }
-        
-        var sums = {};
-        data.forEach(countObject => sums[countObject.date] = getSum(countObject));
-        data.forEach(
-            countObject => getCountableKeys(countObject).forEach(
-                (k) => countObject[k] = parseInt(countObject[k]) / sums[countObject.date]
-            )
-        );
+        // if (tags.length < 1) this.tags = this.standardKeys(data, 5);
 
-        var keys = [];
-        data.forEach(
-            countObject => {
-                keys = getCountableKeys(countObject);
-                keys.forEach(
-                    (k) => {
-                        if (keys.indexOf(k) === -1) keys.push(k);
-                    }
-                )
-            }
-        );
 
-        // console.log(keys);
+        // data = this.scaleData(data);
+
+        // console.log(this.maxCount(data));
+
+        var keys = this.tags;
 
         var x = this.x,
             y = this.y,
@@ -84,9 +109,8 @@ class StackedChart extends BaseVisualisation {
             area = this.area,
             stack = this.stack;
 
-
         x.domain(d3.extent(data, function (d) { return d.date; }));
-        y.domain([0, this.scaleFactor]);
+        y.domain([0, yMax]);
         z.domain(keys);
         stack.keys(keys);
 
@@ -116,31 +140,143 @@ class StackedChart extends BaseVisualisation {
 
         g.append("g")
             .attr("class", "axis axis--y")
-            .call(d3.axisLeft(y).ticks(10, "%"));
-
+            .call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
     }
 
+
+    /**
+     * Returns array of posts per tag per month 
+     * (without last month or first month, 
+     * because the months might not be complete).
+     * @param {*} data 
+     * @return {Array} posts per tag per month
+     */
     transformData(data) {
         var countsPerMonth = {};
+        var tags = this.tags;
+
+        //Initialize countsPerMonth with all tags
+        var minDate = data.reduce((min, curr) => min > curr.CreationDate ? curr.CreationDate : min, data[0].CreationDate);
+        var maxDate = data.reduce((max, curr) => max < curr.CreationDate ? curr.CreationDate : max, data[0].CreationDate);
+        var minYear = parseInt(minDate.slice(0, 4));
+        var maxYear = parseInt(maxDate.slice(0, 4));
+        var minMonth = parseInt(minDate.slice(5, 7));
+        var maxMonth = parseInt(maxDate.slice(5, 7));
+
+        for (var m = minMonth; m < 12; m++) {
+            var tempDate = minYear + "-" + (m < 10 ? "0" + m : m);
+            countsPerMonth[tempDate] = {
+                "date": d3.timeParse("%Y-%m")(tempDate),
+                "rest": 0
+            };
+            tags.forEach(t => countsPerMonth[tempDate][t] = 0);
+        }
+        for (var y = minYear + 1; y <= maxYear - 1; y++) {
+            for (var m = 1; m <= 12; m++) {
+                var tempDate = y + "-" + (m < 10 ? "0" + m : m);
+                countsPerMonth[tempDate] = {
+                    "date": d3.timeParse("%Y-%m")(tempDate),
+                    "rest": 0
+                };
+                tags.forEach(t => countsPerMonth[tempDate][t] = 0);
+            }
+        }
+        for (var m = 1; m < maxMonth; m++) {
+            var tempDate = y + "-" + (m < 10 ? "0" + m : m);
+            countsPerMonth[tempDate] = {
+                "date": d3.timeParse("%Y-%m")(tempDate),
+                "rest": 0
+            };
+            tags.forEach(t => countsPerMonth[tempDate][t] = 0);
+        }
+
+        //count number of views per tag per month
         data.forEach(function (d, i) {
             var month = d.CreationDate.slice(0, 7);
-            if (!countsPerMonth[month]) {
-                // countsPerMonth.push(month);
-                // if (i < 5) sconsole.log(countsPerMonth[month]);
-                countsPerMonth[month] = { date: d3.timeParse("%Y-%m")(month) };
-            }
-            if (isNaN(countsPerMonth[month][d.TagName])) {
-                countsPerMonth[month][d.TagName] = 1;
-                // console.log(i + ", [" + month + "][" + d.TagName + "] = " + countsPerMonth[month][d.TagName]);
-            } else {
+            // if (i < 5) { console.log(countsPerMonth[month]) };
+            if (!countsPerMonth[month]) return;
+            if (tags.includes(d.TagName)) {
                 countsPerMonth[month][d.TagName] += 1;
-                // console.log(i + ", [" + month + "][" + d.TagName + "] = " + countsPerMonth[month][d.TagName]);
+            } else {
+                countsPerMonth[month]["rest"] += 1;
             }
         });
 
-
-        return Object.values(countsPerMonth);;
+        return data = Object.values(countsPerMonth);;
     }
+
+    /**
+     * Scale data to percentages
+     * @param {array} data 
+     * @return {array} Array with all entries between 0 and 1, with the sum being 1
+     */
+    scaleData(data) {
+
+        var getCountableKeys = function (countObject) {
+            return Object.keys(countObject).filter(k => k !== "date");
+        }
+        var getSum = function (countObject) {
+            return getCountableKeys(countObject).map(k => countObject[k]).reduce((sum, curr) => sum + parseInt(curr), 0);
+        }
+
+        var scaledData = [];
+        data.forEach(d => scaledData.push(d));
+
+        console.log(scaledData);
+        var sums = {};
+        scaledData.forEach(countObject => sums[countObject.date] = getSum(countObject));
+        scaledData.forEach(
+            countObject => getCountableKeys(countObject).forEach(
+                (k) => countObject[k] = parseInt(countObject[k]) / sums[countObject.date]
+            )
+        );
+
+        return scaledData;
+    }
+
+    maxCount(data) {
+        var tags = this.tags;
+        return data.reduce(function (max, curr) {
+            var sum = 0;
+            tags.forEach(t => sum += curr[t]);
+            return sum > max ? sum : max;
+        }, 0);
+
+        // return data.reduce(function (max, curr) {
+        //     var currMax = Object.values(curr).filter(v => !(v instanceof Date)).reduce(function (sum, curr) {
+        //         return sum + curr;
+        //     }, 0);
+        //     return currMax > max ? currMax : max;
+        // }, 0);
+    }
+
+    /**
+     * When no options are chosen, choose the n tags with the most overall count
+     * 
+     * @param {Array} unsorted_data 
+     * @param {int} n 
+     * @return {Array} Array of n most popular keys
+     */
+    standardKeys(data, n) {
+        var counts = {};
+        data.forEach(function (d, i) {
+            if (!counts[d.TagName]) {
+                counts[d.TagName] = 1;
+            } else {
+                counts[d.TagName] += 1;
+            }
+        });
+        var sorter = [];
+        for (var tag in counts) {
+            sorter.push([tag, counts[tag]]);
+        }
+        sorter.sort((a, b) => b[1] - a[1]);
+        var sorted = [];
+        sorter.forEach((d, i) => { if (i < n) sorted.push(d[0]) });
+
+        return sorted;
+    }
+
 
 }
 

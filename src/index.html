@@ -10,9 +10,9 @@
         .right{display:flex;flex-direction: column; background-color: khaki}
         .top{background-color: rgb(230, 230, 230)}
         .bottom{background-color: rgb(240, 240, 240)}
-        .popup-outer{position: absolute; left: 50%;z-index: 10}
+        .popup-outer{position: absolute; left: 50%; z-index: 10}
         .popup-inner{position: relative; left: -50%; }
-        #barchart-options { background:#293133;opacity:0.8;color: #e2e2e2;width: 190px; height: 178px; top: -218px;
+        #barchart-options { background:#293133;opacity:0.8;color: #e2e2e2;width: 190px; height: 350px; top: -400px;
           padding: 20px; 
           -webkit-transition: top .3s, -webkit-transform .3s;
           transition: top .3s, transform .3s;}
@@ -48,6 +48,22 @@
                 <input id="checkbox_viewcount" type="checkbox" value="ViewCount" onclick="updateBarChart(this.value, this.checked)">
                 <label for="checkbox_viewcount">View count</label>
               </div>
+            </fieldset>
+          </br>
+            <fieldset>
+              <legend>Choose what counts to show in the stacked chart </legend>
+              <div>
+                <input id="checkbox_percentages" type="checkbox" value="Percentages" onclick="updateStackedChart(this.value, this.checked)">
+                <label for="checkbox_percentages">Percentages</label>
+              </div>
+              <div>
+                <input id="checkbox_zoom" type="checkbox" value="Zoom" onclick="updateStackedChart(this.value, this.checked)">
+                <label for="checkbox_zoom">Zoom</label>
+              </div>
+              <div>
+                <input id="checkbox_posts" type="checkbox" value="Posts" onclick="updateStackedChart(this.value, this.checked)">
+                <label for="checkbox_posts">Number of posts</label>
+              </div>     
             </fieldset>
       </div>
     </div>    
