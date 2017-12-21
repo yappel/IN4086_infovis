@@ -1,4 +1,5 @@
 import BaseVisualisation from './basevisualisation.js';
+import * as d3 from "d3";
 
 class StackedChart extends BaseVisualisation {
 
@@ -25,6 +26,47 @@ class StackedChart extends BaseVisualisation {
         this.g = this.svg.append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         this.dataArea = this.g.append("g");
+        var self = this;
+        this.selectedMonths = [];
+
+        var rectleft = this.svg.append("rect").style("pointer-events", "none");
+        var rectright = this.svg.append("rect").style("pointer-events", "none");
+        var dragBehaviour = d3.drag()
+            .on("start", () => {
+                var coords = d3.mouse(this.svg.node());
+                rectleft.attr("x",margin.left);
+                rectleft.attr("y",margin.top);
+                rectleft.attr("height",height);
+                rectleft.attr("width",coords[0] - margin.left);
+                rectleft.style("opacity",0.5)
+
+                rectright.attr("x",coords[0]);
+                rectright.attr("y",margin.top);
+                rectright.attr("height",height);
+                rectright.attr("width",width + margin.left - coords[0]);
+                rectright.style("opacity",0.5)
+            })
+            .on("end", () => {
+                var coords = d3.mouse(this.svg.node());
+                var start = rectleft.attr("width");
+                var end = coords[0] - margin.left;
+                var allMonths = d3.timeMonths(x.domain()[0], x.domain()[1]);
+                this.selectedMonths = [];
+                allMonths.forEach(m => {
+                    var xcoord = x(m);
+                    if(xcoord > start && xcoord < end) {
+                        this.selectedMonths.push(m);
+                    };
+                });
+                filterCallback(this);
+            })
+            .on("drag", () => {
+                var coords = d3.mouse(this.svg.node());
+                rectright.attr("x",coords[0]);
+                rectright.attr("width",width + margin.left - coords[0]);
+            });
+        this.svg.call(dragBehaviour);
+
         this.highlightTagArea = this.g.append("g");
         this.highlightTagArea.append("text").text(() => "")
             .attr("class", "selectedTag")
@@ -60,6 +102,18 @@ class StackedChart extends BaseVisualisation {
         this.tags = [];
 
         var count = 0;
+    }
+
+    filter(data) {
+        if(this.selectedMonths.length === 0) {
+            return data;
+        }
+        // console.log(this.selectedMonths);
+        var minDate = this.selectedMonths.reduce((min, curr) => min > curr ? curr : min, this.selectedMonths[0]);
+        var maxDate = this.selectedMonths.reduce((max, curr) => max < curr ? curr : max, this.selectedMonths[0]);
+        // console.log(minDate,maxDate);
+        var filtered = data.filter(d => new Date(d.CreationDate) >= minDate && new Date(d.CreationDate) <= maxDate);
+        return filtered;
     }
 
     update(rawdata, filtered_data, data_has_changed = false, tags = []) {
@@ -160,19 +214,7 @@ class StackedChart extends BaseVisualisation {
             .transition()
             .style("fill", function (d) { return z(d.key); })
             .attr("d", area);
-           
 
-        // layerEnter.append("text")
-        // .style("font", "10px sans-serif")
-        // .attr("dy", ".35em")
-        // .attr("x",  6);
-        // layerEnter.merge(layer).filter(function (d) { return d[d.length - 1][1] - d[d.length - 1][0] > 0.1; })
-        //     // .attr("x", width - 6)
-        //     // .style("text-anchor", "end")
-        //     .attr("y", function (d) { return y((d[d.length - 1][0] + d[d.length - 1][1]) / 2); })
-        //     .text(function (d) { return d.key; });
-
-        
         this.xaxis.call(d3.axisBottom(x));
 
         this.yaxis.call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
@@ -182,8 +224,6 @@ class StackedChart extends BaseVisualisation {
 
     updateSelectedTagLabel(tagName) {
         var tag = this.highlightTagArea.selectAll("text").data([tagName]);
-        // console.log(tagName, tag.enter().size(), tag.size() ,tag.exit().size());
-                   
         tag.merge(tag.enter())
             .text(function (d) {return d; });
         tag.exit().remove();
