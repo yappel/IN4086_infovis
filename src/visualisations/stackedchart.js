@@ -24,6 +24,7 @@ class StackedChart extends BaseVisualisation {
 
         this.g = this.svg.append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        this.dataArea = this.g.append("g");
 
         this.xaxis = this.g.append("g")
             .attr("class", "axis axis--x")
@@ -60,12 +61,10 @@ class StackedChart extends BaseVisualisation {
 
         //I need to implement a radiobutton about what to show:
         var radiobutton = 2;
-        console.log(radiobutton);
 
-        this.tags = tags.length < 1 ? this.standardKeys(filtered_data, 2) : tags;
+        this.tags = tags.length < 1 ? this.standardKeys(filtered_data, 25) : tags;
 
         // if (!this.options.zoomed_percentage) this.tags.unshift("rest");
-        console.log(this.tags);
 
         var data = this.transformData(filtered_data);
         yMax = this.maxCount(data);
@@ -92,7 +91,6 @@ class StackedChart extends BaseVisualisation {
 
         //         break;
         // }
-        console.log(data);
 
         // if (tags.length < 1) this.tags = this.standardKeys(data, 5);
 
@@ -121,15 +119,18 @@ class StackedChart extends BaseVisualisation {
             .y1(function (d) { return y(d[1]); });
 
         var stackedData = stack(data);
-        g.selectAll(".layer").remove();
-        var layer = g.selectAll("path")
+
+        var layer = this.dataArea.selectAll("path")
             .data(stackedData);
-        console.log("y", layer.size(),layer.enter().size())
-        layer.exit().remove();
+        layer.exit()
+            .transition()
+            .style("opacity",0)
+            .remove();
 
         var layerEnter = layer.enter().append("path")
             .attr("class", "area");
         layerEnter.merge(layer)
+            .transition()
             .style("fill", function (d) { return z(d.key); })
             .attr("d", area)
 
