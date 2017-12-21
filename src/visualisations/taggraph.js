@@ -22,9 +22,19 @@ class TagGraph extends BaseVisualisation {
         this.options = {
             width: containerSize.width,
             height: containerSize.height,
-            node_radius: 5
+            node_radius: 10
         };
+        var style = {
+            node_radius: 10,
+            node_colour: "red",
+            node_colour_hover: "orange",
+            node_colour_selected: "green",
+            node_stroke_colour: "#fff",
+            node_stroke_width: 1.5,
+            link_colour: "#0000ff"
+        }
         Object.assign(this.options, options);
+        this.options.style ? Object.assign(this.options.style, style) : this.options.style = style;
         this.svg = root.append("svg")
             .attr("width", this.options.width)
             .attr("height", this.options.height);
@@ -70,7 +80,7 @@ class TagGraph extends BaseVisualisation {
             .data(this.transformed_data.links)
             .enter().append("line")
                 .attr("stroke-width", (d) => Math.sqrt(d.value)) // TODO: other function for weight
-                .attr("stroke", (d) => "#0000ff") // TODO: derive colour from value
+                .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
                 .style("opacity",(d) => weightScale(d.value));
                 // TODO: update, exit
 
@@ -84,13 +94,15 @@ class TagGraph extends BaseVisualisation {
                     .on("end", this.nodeDragEnded.bind(this)));
         //     // TODO: update, exit
         var radius = this.options.node_radius;
+        var hover_colour = this.options.style.node_colour_hover;
+        console.log(hover_colour)
         nodesEnter.append("circle")
             .on("mouseover", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
                 el.transition()
                 .attr("oldfill",el.attr("fill"))
-                .attr("fill", "orange").attr("r", radius * 2)
-                .attr("r", 2* radius);
+                .attr("fill", hover_colour).attr("r", radius * 2)
+                .attr("r", 2 * radius);
             })
             .on("mouseout", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
@@ -103,7 +115,7 @@ class TagGraph extends BaseVisualisation {
                 var tags = this.selection.selectedTags;
                 var index = tags.indexOf(item.id);
                 if(index >= 0) {
-                    tags.splice(index, 1);;
+                    tags.splice(index, 1);
                 } else {
                     tags.push(item.id);
                 }
@@ -112,6 +124,8 @@ class TagGraph extends BaseVisualisation {
                 this.filterChanged(this);
             })
             .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
+            .attr("stroke", this.options.style.node_stroke_colour)
+            .attr("stroke-width", this.options.style.node_stroke_width)
             .attr("r", radius);
 
         nodesEnter.append("text")
@@ -137,8 +151,8 @@ class TagGraph extends BaseVisualisation {
         if(!selectedTags && this.selection) {
             selectedTags = this.selection.selectedTags
         }
-        var defaultColor = "red";
-        var selectedColor = "green";
+        var defaultColor = this.options.style.node_colour;
+        var selectedColor = this.options.style.node_colour_selected;
         if(selectedTags) {
             return selectedTags.indexOf(d.id) >= 0 ? selectedColor : defaultColor;
         }
