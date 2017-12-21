@@ -25,6 +25,15 @@ class StackedChart extends BaseVisualisation {
         this.g = this.svg.append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         this.dataArea = this.g.append("g");
+        this.highlightTagArea = this.g.append("g");
+        this.highlightTagArea.append("text").text(() => "")
+            .attr("class", "selectedTag")
+            .style("font", "40px sans-serif")
+            .style("color", "#efefef")
+            .style("opacity", "0.4")
+            .attr("y", margin.top * 2)
+            .attr("x",  width)
+            .style("text-anchor", "end");
 
         this.xaxis = this.g.append("g")
             .attr("class", "axis axis--x")
@@ -127,12 +136,31 @@ class StackedChart extends BaseVisualisation {
             .style("opacity",0)
             .remove();
 
+        var self = this;
         var layerEnter = layer.enter().append("path")
-            .attr("class", "area");
+            .attr("class", "area")
+            .on("mouseover", (d) => {
+                var area = this.dataArea.selectAll("path").filter(d2 => 
+                    {
+                        return d2.key !== d.key
+                    });
+                self.updateSelectedTagLabel(d.key);
+                area.transition().style("opacity",0.4)
+                
+            })
+            .on("mouseout", (d) => {
+                var area = this.dataArea.selectAll("path").filter(d2 => 
+                    {
+                        return d2.key !== d.key
+                    });
+                self.updateSelectedTagLabel("");
+                area.transition().style("opacity",1)
+            });
         layerEnter.merge(layer)
             .transition()
             .style("fill", function (d) { return z(d.key); })
-            .attr("d", area)
+            .attr("d", area);
+           
 
         // layerEnter.append("text")
         // .style("font", "10px sans-serif")
@@ -148,6 +176,17 @@ class StackedChart extends BaseVisualisation {
         this.xaxis.call(d3.axisBottom(x));
 
         this.yaxis.call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
+
+        this.updateSelectedTagLabel()
+    }
+
+    updateSelectedTagLabel(tagName) {
+        var tag = this.highlightTagArea.selectAll("text").data([tagName]);
+        // console.log(tagName, tag.enter().size(), tag.size() ,tag.exit().size());
+                   
+        tag.merge(tag.enter())
+            .text(function (d) {return d; });
+        tag.exit().remove();
     }
 
 
