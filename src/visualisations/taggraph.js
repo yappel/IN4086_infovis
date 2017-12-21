@@ -100,15 +100,14 @@ class TagGraph extends BaseVisualisation {
             .on("mouseover", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
                 el.transition()
-                .attr("oldfill",el.attr("fill"))
-                .attr("fill", hover_colour).attr("r", radius * 2)
+                .attr("fill", hover_colour)
                 .attr("r", 2 * radius);
             })
             .on("mouseout", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
-                el.transition().attr(
-                    "fill", el.attr("oldfill")
-                ).attr("r", radius)
+                el.transition()
+                    .attr("fill", d => this.getCircleColor(d, null))
+                    .attr("r", radius)
             })
             .on("click", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
@@ -119,8 +118,7 @@ class TagGraph extends BaseVisualisation {
                 } else {
                     tags.push(item.id);
                 }
-                el.attr("fill", d => this.getCircleColor(d,null))
-                .attr("oldfill",  d => this.getCircleColor(d,null));
+                el.attr("fill", d => this.getCircleColor(d,null));
                 this.filterChanged(this);
             })
             .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
