@@ -22,7 +22,8 @@ class TagGraph extends BaseVisualisation {
         this.options = {
             width: containerSize.width,
             height: containerSize.height,
-            node_radius: 10
+            node_radius: 10,
+            use_percentage: true
         };
         var style = {
             node_radius: 10,
@@ -79,9 +80,9 @@ class TagGraph extends BaseVisualisation {
         this.links.selectAll("line")
             .data(this.transformed_data.links)
             .enter().append("line")
-                .attr("stroke-width", (d) => Math.sqrt(d.value)) // TODO: other function for weight
+                .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
                 .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
-                .style("opacity",(d) => weightScale(d.value));
+                .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
                 // TODO: update, exit
 
         var nodesSelect = this.nodes.selectAll("circle")
@@ -95,7 +96,6 @@ class TagGraph extends BaseVisualisation {
         //     // TODO: update, exit
         var radius = this.options.node_radius;
         var hover_colour = this.options.style.node_colour_hover;
-        console.log(hover_colour)
         nodesEnter.append("circle")
             .on("mouseover", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
@@ -246,6 +246,13 @@ class TagGraph extends BaseVisualisation {
                 }
             }
         });
+        // Compute the totals for each tag
+        var tags_nested = d3.nest()
+            .key(d => d.TagName)
+            .rollup(v => v.length)
+            .entries(data);        
+        var totals = {};
+        tags_nested.forEach(element => totals[element.key] = element.value);
         // Create all the links
         var links = [];
         for (var i = 0; i < nodes.length; i++) {
@@ -256,7 +263,7 @@ class TagGraph extends BaseVisualisation {
                     links.push({
                         source: tagNameI,
                         target: tagNameJ,
-                        value: connection_matrix[tagNameI][tagNameJ]
+                        value: this.options.use_percentage ? connection_matrix[tagNameI][tagNameJ] / (totals[tagNameI] + totals[tagNameJ] - connection_matrix[tagNameI][tagNameJ]) : connection_matrix[tagNameI][tagNameJ]
                     });
                 }
             }
