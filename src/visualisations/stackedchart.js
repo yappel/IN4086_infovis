@@ -22,13 +22,14 @@ class StackedChart extends BaseVisualisation {
 
         this.stack = d3.stack();
 
-        this.area = d3.area()
-            .x(function (d, i) { return x(d.data.date); })
-            .y0(function (d) { return y(d[0]); })
-            .y1(function (d) { return y(d[1]); });
-
         this.g = this.svg.append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        this.xaxis = this.g.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", "translate(0," + height + ")");
+        this.yaxis = this.g.append("g")
+            .attr("class", "axis axis--y");
 
         var radiobutton = 0;
         //BUG if I don't load the application in full 
@@ -51,8 +52,8 @@ class StackedChart extends BaseVisualisation {
         var count = 0;
     }
 
-    update(data, filtered_data, data_has_changed = false, tags = []) {
-        super.update(data, filtered_data, data_has_changed);
+    update(rawdata, filtered_data, data_has_changed = false, tags = []) {
+        super.update(rawdata, filtered_data, data_has_changed);
 
         var yMax = 1;
         var yTicks = [10, "%"];
@@ -61,34 +62,36 @@ class StackedChart extends BaseVisualisation {
         var radiobutton = 2;
         console.log(radiobutton);
 
-        this.tags = tags.length < 1 ? this.standardKeys(data, 5) : tags;
+        this.tags = tags.length < 1 ? this.standardKeys(filtered_data, 2) : tags;
 
         // if (!this.options.zoomed_percentage) this.tags.unshift("rest");
         console.log(this.tags);
 
-        data = this.transformData(filtered_data);
+        var data = this.transformData(filtered_data);
+        yMax = this.maxCount(data);
+        yTicks = [10, "d"];
 
-        switch (radiobutton) {
-            //Percentages, show 100%
-            case 0:
-                this.tags.push("rest");
-                data = this.scaleData(data);
-                yMax = this.maxCount(data);
-                this.tags.pop();
-                break;
-            //Percentages, show zoomed
-            case 1:
-                data = this.scaleData(data);
-                yMax = this.maxCount(data);
-                break;
-            //Number of posts
-            case 2:
-                this.tags.push("rest");
-                yMax = this.maxCount(data);
-                yTicks = [10, "d"];
+        // switch (radiobutton) {
+        //     //Percentages, show 100%
+        //     case 0:
+        //         this.tags.push("rest");
+        //         data = this.scaleData(data);
+        //         yMax = this.maxCount(data);
+        //         this.tags.pop();
+        //         break;
+        //     //Percentages, show zoomed
+        //     case 1:
+        //         data = this.scaleData(data);
+        //         yMax = this.maxCount(data);
+        //         break;
+        //     //Number of posts
+        //     case 2:
+        //         this.tags.push("rest");
+        //         yMax = this.maxCount(data);
+        //         yTicks = [10, "d"];
 
-                break;
-        }
+        //         break;
+        // }
         console.log(data);
 
         // if (tags.length < 1) this.tags = this.standardKeys(data, 5);
@@ -106,41 +109,44 @@ class StackedChart extends BaseVisualisation {
             g = this.g,
             width = this.width,
             height = this.height,
-            area = this.area,
             stack = this.stack;
 
         x.domain(d3.extent(data, function (d) { return d.date; }));
         y.domain([0, yMax]);
         z.domain(keys);
         stack.keys(keys);
+        var area = d3.area()
+            .x(function (d, i) {return x(d.data.date); })
+            .y0(function (d) { return y(d[0]); })
+            .y1(function (d) { return y(d[1]); });
 
-        var layer = g.selectAll(".layer")
-            .data(stack(data))
-            .enter().append("g")
-            .attr("class", "layer");
+        var stackedData = stack(data);
+        g.selectAll(".layer").remove();
+        var layer = g.selectAll("path")
+            .data(stackedData);
+        console.log("y", layer.size(),layer.enter().size())
+        layer.exit().remove();
 
-        layer.append("path")
-            .attr("class", "area")
+        var layerEnter = layer.enter().append("path")
+            .attr("class", "area");
+        layerEnter.merge(layer)
             .style("fill", function (d) { return z(d.key); })
-            .attr("d", area);
+            .attr("d", area)
 
-        layer.filter(function (d) { return d[d.length - 1][1] - d[d.length - 1][0] > 0.01; })
-            .append("text")
-            .attr("x", width - 6)
-            .attr("y", function (d) { return y((d[d.length - 1][0] + d[d.length - 1][1]) / 2); })
-            .attr("dy", ".35em")
-            .style("font", "10px sans-serif")
-            .style("text-anchor", "end")
-            .text(function (d) { return d.key; });
+        // layerEnter.append("text")
+        // .style("font", "10px sans-serif")
+        // .attr("dy", ".35em")
+        // .attr("x",  6);
+        // layerEnter.merge(layer).filter(function (d) { return d[d.length - 1][1] - d[d.length - 1][0] > 0.1; })
+        //     // .attr("x", width - 6)
+        //     // .style("text-anchor", "end")
+        //     .attr("y", function (d) { return y((d[d.length - 1][0] + d[d.length - 1][1]) / 2); })
+        //     .text(function (d) { return d.key; });
 
-        g.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x));
+        
+        this.xaxis.call(d3.axisBottom(x));
 
-        g.append("g")
-            .attr("class", "axis axis--y")
-            .call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
+        this.yaxis.call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
     }
 
 
@@ -182,7 +188,7 @@ class StackedChart extends BaseVisualisation {
             }
         }
         for (var m = 1; m < maxMonth; m++) {
-            var tempDate = y + "-" + (m < 10 ? "0" + m : m);
+            var tempDate = maxYear + "-" + (m < 10 ? "0" + m : m);
             countsPerMonth[tempDate] = {
                 "date": d3.timeParse("%Y-%m")(tempDate),
                 "rest": 0
@@ -202,7 +208,7 @@ class StackedChart extends BaseVisualisation {
             }
         });
 
-        return data = Object.values(countsPerMonth);;
+        return Object.values(countsPerMonth);;
     }
 
     /**
