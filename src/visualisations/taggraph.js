@@ -26,9 +26,6 @@ class TagGraph extends BaseVisualisation {
             height: containerSize.height,
             use_percentage: true
         };
-        // #ece7f2
-        // #a6bddb
-        // #2b8cbe  #045a8d
         var style = {
             node_radius: 15,
             node_colour: "#833A1A",
@@ -172,6 +169,10 @@ class TagGraph extends BaseVisualisation {
         return this.selection.selectedTags.indexOf(tagName) >= 0
     }
 
+    /**
+     * If there are selected tags, only return the data entries which contain that tag.
+     * @param {Object[]} data - The data objects
+     */
     filter(data) {
         var filtered = data;
         if(this.selection.selectedTags.length > 0 ) {
