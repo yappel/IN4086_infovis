@@ -40,7 +40,7 @@ d3.csv(data_url, (d) => {
         });
     });
     // Create and add the visualisations
-    var barchart = new BarChart(d3.select("#barchart"), filterCallback, data, {})
+    var barchart = new BarChart(d3.select("#barchart"), filterCallback, {})
     visualisations.push(barchart);
     var graph = new TagGraph(d3.select("#taggraph"), filterCallback, {});
     visualisations.push(graph);

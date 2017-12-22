@@ -3,6 +3,10 @@ import * as d3 from 'd3';
 
 class BarChart extends BaseVisualisation {
 
+    /**
+     * Enable a certain metric (like ScoreCount) so it is visualized in the bar chart.
+     * @param {*string} metricName the name of the metric to enable
+     */
     enable(metricName) {
         var i= this.countsToDisplay.indexOf(metricName);
         if(i === -1) {
@@ -11,6 +15,10 @@ class BarChart extends BaseVisualisation {
         this.updateCountsDisplayed();
     }
 
+    /**
+     * Disable a certain metric (like ScoreCount) so it is no longer visualized in the bar chart.
+     * @param {*string} metricName the name of the metric to disable
+     */
     disable(metricName) {
         var i= this.countsToDisplay.indexOf(metricName);
         if(i > -1) {
@@ -19,9 +27,17 @@ class BarChart extends BaseVisualisation {
         this.updateCountsDisplayed();
     }
 
-    constructor(root, filterChangedCallback, data, options) {
+    /**
+     * Base constructor
+     * @param {*} root - The root html element the visualisation can use
+     * @param {*} filterChangedCallback - The function to call when the visualisations filter has changed
+     * @param {Object} options - Holds different options avialable for the bar chart (optional)
+     */
+    constructor(root, filterChangedCallback, options) {
         super(root, filterChangedCallback);
 
+        //Determine the size of the container the bar chart will be visualized in
+        // so that the svg will span exactly the container.
         var domnode = root.node();
         var containerSize = domnode.getBoundingClientRect();
 
@@ -41,6 +57,8 @@ class BarChart extends BaseVisualisation {
 
         this.innerScaleBand = d3.scaleBand().padding(0.05);
         var metrics = this.tag().Metrics;
+
+        //The color scheme for the metrics copied from http://colorbrewer2.org/
         var colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'];
         this.colorScheme = function(metricName) {
             var index = metrics.indexOf(metricName);
@@ -63,10 +81,13 @@ class BarChart extends BaseVisualisation {
         this.outersvg =  d3.select("#barchart").append('svg')
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom);
+
         this.svg = this.outersvg
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
         this.legendArea = this.outersvg.append("g");
+
         var metrics = this.tag().Metrics;
         var y = this.totalheight - 30;
         var legendScaleBand = d3.scaleBand()
@@ -87,6 +108,7 @@ class BarChart extends BaseVisualisation {
                 .attr("x", d => paddingLeft + legendScaleBand(d) + 10 + 5)
                 .style("font-size", "0.8em")
                 .attr("y", y + 8);
+
         this.legend = this.legendArea
             .selectAll(".legendEntry");
 
@@ -113,6 +135,12 @@ class BarChart extends BaseVisualisation {
             
     }
 
+    /**
+     * Update function, updates the bar chart with the given data.
+     * @param {Object[]} data - The collection of data
+     * @param {Object[]} filtered_data - The collection of filtered data
+     * @param {boolean} data_has_changed - Boolean indicating if the data has been changed from last time
+     */
     update(data, filtered_data, data_has_changed = false) {
         super.update(data, filtered_data, data_has_changed);
         console.log(`[ data.length : ${data.length}, filtered_data.length : ${filtered_data.length} ] ` + "Updating data for barchart...");
@@ -127,11 +155,9 @@ class BarChart extends BaseVisualisation {
         console.log("Data for barChart updated!");
     }
 
-    filter(data) {
-        // TODO: filtering
-        return data;
-    }
-
+    /**
+     * Update the legend to be consistend with the currently shown data. 
+     */
     updateLegend() {
         var selection = this.legend;
         selection
@@ -141,6 +167,9 @@ class BarChart extends BaseVisualisation {
             .on("click", (d) => this.countsToDisplay.indexOf(d) >= 0 ? this.disable(d) : this.enable(d))
     }
 
+    /**
+     * Update the bar to be up to date with the data to be shown. 
+     */
     updateBars() {
         var self = this;
         var tags = this.tags;
@@ -177,6 +206,9 @@ class BarChart extends BaseVisualisation {
         
     }
 
+    /**
+     * Update the bottom axis to be up to date with the data to be shown. 
+     */
     updateXAxis() {
         var self = this;
         var tags = this.tags;
@@ -193,6 +225,9 @@ class BarChart extends BaseVisualisation {
                 });;
     };
 
+    /**
+     * Update the left axis to be up to date with the data to be shown. 
+     */
     updateYAxis() {
         var self = this;
         var tags = this.tags;
@@ -202,6 +237,10 @@ class BarChart extends BaseVisualisation {
         self.svg.select(".yAxis").call(self.yAxis);
     };
 
+    /**
+     * Callback for when the data or countsToDisplay have been changed.
+     * This method updates the barchart elements.
+     */
     updateCountsDisplayed() {
         this.innerScaleBand.domain(this.countsToDisplay).rangeRound([0, this.xScaleBand.bandwidth()]);
         this.updateYAxis();
@@ -209,7 +248,11 @@ class BarChart extends BaseVisualisation {
         this.updateLegend();
     }
 
-
+    /**
+     * Represents a tag object as used by bar chart.
+     * Holds the name of the tag and the different metrics calculated for that tag.
+     * @param {*Object} dataEntry An anitial raw data entry to initialize the metrics with (optional)
+     */
     tag(dataEntry) {
         var self = {};
         var userIds = {}
@@ -243,6 +286,11 @@ class BarChart extends BaseVisualisation {
         return self;
     };
 
+    /**
+     * Transform the raw data to tag objects that can be used
+     * to create the bar chart.
+     * @param {*Object[]} data 
+     */
     transformData(data) {
         var tags = {};
         var tag = this.tag;
