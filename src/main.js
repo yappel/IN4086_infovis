@@ -21,7 +21,7 @@ var filterCallback = function (initiator) {
                 filtered_data = vis2.filter(filtered_data);
             } 
         });
-        vis1.update(data, filtered_data, false);
+        if (vis1 !== initiator) vis1.update(data, filtered_data, false);
     });
 }
 window.updateshit = () => {

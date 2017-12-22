@@ -27,14 +27,17 @@ class TagGraph extends BaseVisualisation {
             node_radius: 10,
             use_percentage: true
         };
+        // #ece7f2
+        // #a6bddb
+        // #2b8cbe  #045a8d
         var style = {
             node_radius: 10,
-            node_colour: "red",
-            node_colour_hover: "orange",
-            node_colour_selected: "green",
-            node_stroke_colour: "#fff",
+            node_colour: "#72CBE0",
+            node_colour_hover: "#47B8D3",
+            node_colour_selected: "#24A9C8",
+            node_stroke_colour: "#72CBE0",
             node_stroke_width: 1.5,
-            link_colour: "#0000ff"
+            link_colour: "#FF9328"
         }
         Object.assign(this.options, options);
         this.options.style ? Object.assign(this.options.style, style) : this.options.style = style;
@@ -168,7 +171,7 @@ class TagGraph extends BaseVisualisation {
         var defaultColor = this.options.style.node_colour;
         var selectedColor = this.options.style.node_colour_selected;
         if(selectedTags) {
-            return selectedTags.indexOf(d.id) >= 0 ? selectedColor : defaultColor;
+            return selectedTags.indexOf(d.id) >= 0 || selectedTags.length === 0 ? selectedColor : defaultColor;
         }
         return defaultColor;
     }
@@ -354,9 +357,6 @@ class TagGraph extends BaseVisualisation {
                     this.selection.selectedTags.push(d.id);
                 }
             });
-        this.nodes.selectAll("circle")
-            .transition()
-            .attr("fill", d => this.getCircleColor(d,this.selection.selectedTags));
         this.filterChanged(this);
     }
 
@@ -371,6 +371,18 @@ class TagGraph extends BaseVisualisation {
             .attr("width", Math.abs(this.selection.maxCoords[0] - this.selection.minCoords[0]))
             .attr("height", Math.abs(this.selection.maxCoords[1] - this.selection.minCoords[1]))
             .style("opacity", 0.2);
+    }
+
+    /**
+     * Callback function that the filter of this visualisation has changed. Forward the call 
+     * to the base class and update all the nodes drawn based on the selected tags.
+     * @param {Object} initiator - The initiator of the function call. 
+     */
+    filterChanged(initiator) {
+        super.filterChanged(initiator);
+        this.nodes.selectAll("circle")
+            .transition()
+            .attr("fill", d => this.getCircleColor(d,this.selection.selectedTags));
     }
 }
 
