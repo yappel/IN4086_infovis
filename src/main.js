@@ -3,7 +3,7 @@ import TagGraph from './visualisations/taggraph.js';
 import BarChart from './visualisations/barchart.js';
 import data_url from '../data/QueryResults.csv';
 import StackedChart from './visualisations/stackedchart.js';
-
+import StatisticsView from './visualisations/statisticsview.js';
 
 var data = [];
 var filtered_data = [];
@@ -49,6 +49,9 @@ d3.csv(data_url, (d) => {
      
     var stackedchart = new StackedChart(d3.select("#stackedchart"), filterCallback, data,{});
     visualisations.push(stackedchart);
+
+    var statistics = new StatisticsView(d3.select("#statistics"), filterCallback);
+    visualisations.push(statistics);
 
     window.barchart = barchart;
     window.taggraph = graph;
