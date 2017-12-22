@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import BaseVisualisation from "./basevisualisation.js";
+import { json } from "d3";
 
 /**
  * Graph visualising the connection between different tags. Each node is a tag and the edges between tags is the
@@ -65,38 +66,48 @@ class TagGraph extends BaseVisualisation {
     }
 
     update(data, filtered_data, data_has_changed = false) {
-        console.log("Updating data for taggraph")
         super.update(data, filtered_data, data_has_changed);
-        // When the original data hasnt't changed return
-        // if (!data_has_changed) return;
-        // Process the data and update new and existing links and nodes
-        var link_data = [];
-        var node_data = [];
         this.transformed_data = this.transformData(data);
         var weightScale = d3.scaleLinear()
             .domain(d3.extent(this.transformed_data.links, function (d) { return Math.pow(d.value,1) }))
             .range([.01, 1]);
 
-        this.links.selectAll("line")
-            .data(this.transformed_data.links)
-            .enter().append("line")
-                .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
-                .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
-                .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
-                // TODO: update, exit
+        var selected_links = this.links.selectAll("line")
+            .data(this.transformed_data.links);
+        selected_links
+            .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
+            .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
+            .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
+            
+        selected_links.enter().append("line")
+            .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
+            .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
+            .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
 
-        var nodesSelect = this.nodes.selectAll("circle")
+        selected_links.exit().remove();
+
+        var selected_nodes = this.nodes.selectAll("g")
             .data(this.transformed_data.nodes);
-        var nodesEnter = nodesSelect
-            .enter().append("g")
-               .call(d3.drag()
-                    .on("start", this.nodeDragStarted.bind(this))
-                    .on("drag", this.nodeDragMoved.bind(this))
-                    .on("end", this.nodeDragEnded.bind(this)));
-        //     // TODO: update, exit
+
+        selected_nodes.selectAll("circle")
+            .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
+            .attr("stroke", this.options.style.node_stroke_colour)
+            .attr("stroke-width", this.options.style.node_stroke_width)
+            .attr("r", this.options.node_radius);
+
+        selected_nodes.selectAll("text")
+            .style("color", "black")
+            .text(function(d) { return d.id });
+
+        var new_nodes = selected_nodes.enter().append("g");
+        new_nodes.call(d3.drag()
+            .on("start", this.nodeDragStarted.bind(this))
+            .on("drag", this.nodeDragMoved.bind(this))
+            .on("end", this.nodeDragEnded.bind(this)));
+
         var radius = this.options.node_radius;
         var hover_colour = this.options.style.node_colour_hover;
-        nodesEnter.append("circle")
+        new_nodes.append("circle")
             .on("mouseover", (item) => {
                 var el = this.nodes.selectAll("circle").filter(d => d.id === item.id);
                 el.transition()
@@ -124,25 +135,23 @@ class TagGraph extends BaseVisualisation {
             .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
             .attr("stroke", this.options.style.node_stroke_colour)
             .attr("stroke-width", this.options.style.node_stroke_width)
-            .attr("r", radius);
+            .attr("r", this.options.node_radius);
 
-        nodesEnter.append("text")
-            .attr("dx", 12)
+        new_nodes.append("text")
+            .attr("dx", this.options.node_radius + 5)
             .attr("dy", ".35em")
             .style("color", "black")
             .text(function(d) { return d.id })
+        
+        selected_nodes.exit().remove();
 
-        if(nodesEnter.size() > 0) {
-            console.log("calling this.simulation")
-            this.simulation
+        this.simulation
             .nodes(this.transformed_data.nodes)
-            .on("tick", this.ticked.bind(this))
-
-            this.simulation
-                .force("link").strength(d=>{return weightScale(d.value)})
-                .links(this.transformed_data.links);
-        }
-
+            .on("tick", this.ticked.bind(this));
+        this.simulation
+            .force("link").strength(d => weightScale(d.value))
+            .links(this.transformed_data.links);
+        this.simulation.alphaTarget(0.25).restart();
     }
 
     getCircleColor(d, selectedTags = null) {
@@ -172,12 +181,8 @@ class TagGraph extends BaseVisualisation {
             .attr("x2", (d) => d.target.x)
             .attr("y2", (d) => d.target.y);
 
-        this.nodes.selectAll("circle")
-            .attr("cx", (d) => d.x)
-            .attr("cy", (d) => d.y);
-        this.nodes.selectAll("text")
-            .attr("dx", (d) => d.x + 10)
-            .attr("dy", (d) => d.y + 5);
+        this.nodes.selectAll("g")
+            .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
     }
 
     /**
