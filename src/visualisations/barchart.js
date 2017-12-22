@@ -28,13 +28,15 @@ class BarChart extends BaseVisualisation {
         var margin = {
                 top: 20,
                 right: 20,
-                bottom: 95,
+                bottom: 135,
                 left: 80
             },
             width = containerSize.width - margin.left - margin.right,
             height = containerSize.height - margin.top - margin.bottom;
        
         this.height = height;
+        this.totalwidth = containerSize.width;
+        this.totalheight = containerSize.height;
 
         this.innerScaleBand = d3.scaleBand().padding(0.05);
         var metrics = this.tag().Metrics;
@@ -57,12 +59,36 @@ class BarChart extends BaseVisualisation {
         this.yAxis = yAxis;
         this.xAxis = xAxis;
 
-        this.svg = d3.select("#barchart").append('svg')
+        this.outersvg =  d3.select("#barchart").append('svg')
             .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            .attr("height", height + margin.top + margin.bottom);
+        this.svg = this.outersvg
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        
+        this.legendArea = this.outersvg.append("g");
+        var metrics = this.tag().Metrics;
+        var y = this.totalheight - 30;
+        var legendScaleBand = d3.scaleBand()
+            .range([0, this.totalwidth])
+            .domain(metrics);
+        var selection = this.legendArea
+            .selectAll(".legendEntry").data(metrics);
+        var enter = selection.enter().append("g").attr('class', 'legendEntry')
+        var paddingLeft = 30;
+        var rects = enter.append("rect")
+               .attr("x", d => paddingLeft + legendScaleBand(d))
+               .attr("y", y)
+               .attr("width", 10)
+               .attr("height", 10)
+               .attr("fill", d => this.colorScheme(d));
+        var texts = enter.append("text")
+                .text(d=>d)
+                .attr("x", d => paddingLeft + legendScaleBand(d) + 10 + 5)
+                .style("font-size", "0.8em")
+                .attr("y", y + 8);
+        this.legend = this.legendArea
+            .selectAll(".legendEntry");
+
         this.svg.append("g")
             .attr("class", "yAxis")
             .call(yAxis)
@@ -81,6 +107,8 @@ class BarChart extends BaseVisualisation {
                 });
         
         this.dataGroup = this.svg.append("g");
+
+        this.legend - this.svg.append("g")
             
     }
 
@@ -101,6 +129,15 @@ class BarChart extends BaseVisualisation {
     filter(data) {
         // TODO: filtering
         return data;
+    }
+
+    updateLegend() {
+        var selection = this.legend;
+        selection
+            .style("font-weight", d => this.countsToDisplay.indexOf(d) >= 0 ? "bold" : 'normal')
+            .style("cursor", "pointer")
+            .attr("class", d => this.countsToDisplay.indexOf(d) >= 0 ? "barchart-legend opacity1" : "barchart-legend opacity0-2")
+            .on("click", (d) => this.countsToDisplay.indexOf(d) >= 0 ? this.disable(d) : this.enable(d))
     }
 
     updateBars() {
@@ -168,6 +205,7 @@ class BarChart extends BaseVisualisation {
         this.innerScaleBand.domain(this.countsToDisplay).rangeRound([0, this.xScaleBand.bandwidth()]);
         this.updateYAxis();
         this.updateBars();
+        this.updateLegend();
     }
 
 
