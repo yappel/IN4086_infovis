@@ -13,13 +13,15 @@ var barchart;
 var numeric_value_properties = ["Count", "Score", "ViewCount", "AnswerCount", "CommentCount", "FavoriteCount"];
 
 var filterCallback = function (initiator) {
-    filtered_data = data;
-    visualisations.forEach(vis => {
-        filtered_data = vis.filter(filtered_data);
-    });
-    visualisations.forEach(vis => {
-        if(vis === initiator) return;
-        vis.update(data, filtered_data, false);
+    visualisations.forEach(vis1 => {
+        var filtered_data = data;
+        visualisations.forEach(vis2 => {
+            // Don't filter own data
+            if (vis1 !== vis2) {
+                filtered_data = vis2.filter(filtered_data);
+            } 
+        });
+        vis1.update(data, filtered_data, false);
     });
 }
 window.updateshit = () => {
