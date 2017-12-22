@@ -14,14 +14,22 @@ class StatisticsView extends BaseVisualisation {
      */
     constructor(root, filterChangedCallback) {
         super(root, filterChangedCallback);
-        this.root.append("h1")
-            .text("Statistics");
+        this.root.append("p")
+            .text("This is a visualisation of posts on StackOverflow tagged with the top 25 tags. The graph displays connections between tags: the more posts have a tag in common, the stronger the connection. The other graphs provide information on the development over time and the interaction with posts per tag. Below some basic information is shown of the complete dataset used and the filtered dataset by interacting with the visualisations.")
+            .style("margin", "0px")
+            .style("padding", "10px");
         this.dataset_view = this.root.append("div");
+        this.dataset_view.style("padding", "10px");
         this.dataset_view.append("h2")
-            .text("Complete Dataset");
+            .text("Complete Dataset")
+            .style("margin-top", "0px")
+            .style("margin-bottom", "5px");
         this.filtered_view = this.root.append("div");
+        this.filtered_view.style("padding", "10px");
         this.filtered_view.append("h2")
-            .text("Filtered Dataset");
+            .text("Filtered Dataset")
+            .style("margin-top", "0px")
+            .style("margin-bottom", "5px");
         this.initStatistics(this.dataset_view);
         this.initStatistics(this.filtered_view);
     }
@@ -39,16 +47,34 @@ class StatisticsView extends BaseVisualisation {
      */
     initStatistics(root) {
         var table = root.append("table");
+        table
+            .style("width", "100%")
+            .style("border", "1px solid white")
+            .style("border-collapse", "collapse")
         var header = table.append("thead").append("tr");
         header.append("th").text("Total number of posts");
-        header.append("th").text("Number of distinct users");
+        header.append("th").text("Number of distinct post creators");
         header.append("th").text("Start date");
         header.append("th").text("End date");
+        this.applyRowStyle(header, "th");
         var body = table.append("tbody").append("tr");
         body.append("td").attr("class", "post_total");
         body.append("td").attr("class", "user_total");
         body.append("td").attr("class", "start_date");
         body.append("td").attr("class", "end_date");
+        this.applyRowStyle(body, "td");
+    }
+
+    /**
+     * Applies a style to table header and table body element nodes.
+     * @param {Object} root - The parent element where all the id elements are in
+     * @param {String} id - The id's to apply the style to
+     */
+    applyRowStyle(root, id) {
+        root.selectAll(id)
+            .style("padding", "5px")
+            .style("border", "1px solid white")
+            .style("text-align", "center")
     }
 
     /**
