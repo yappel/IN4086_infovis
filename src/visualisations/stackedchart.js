@@ -10,12 +10,31 @@ class StackedChart extends BaseVisualisation {
         var domnode = root.node();
         var containerSize = domnode.getBoundingClientRect();
 
-        var margin = { top: 20, right: 20, bottom: 30, left: 50 },
+        var margin = { top: 20, right: 20, bottom: 60, left: 50 },
             width = containerSize.width - margin.left - margin.right,
             height = containerSize.height - margin.top - margin.bottom;
 
         this.svg.attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom);
+        
+        this.legendArea = this.svg.append("g");
+        var metrics = ["","Counts", "Percentages"];
+        var y = containerSize.height - 30;
+        var padding = 0;
+        var legendScaleBand = d3.scaleBand()
+            .range([0, containerSize.width])
+            .domain(metrics);
+        var selection = this.legendArea.selectAll(".barchart-legend").data(metrics); 
+        selection.enter().append("text")
+            .text(d=>d)
+            .attr("x", d => padding + legendScaleBand(d))
+            .style("font-size", "0.8em")
+            .attr("y", y + 8)
+            .attr("class", "barchart-legend")
+            .on("click", (d) => {
+                this.setMode(d);
+            });
+        this.updateLegend();
 
         var x = d3.scaleTime().range([0, width]),
             y = d3.scaleLinear().range([height, 0]),
@@ -65,7 +84,7 @@ class StackedChart extends BaseVisualisation {
                 rectright.attr("x",coords[0]);
                 rectright.attr("width",width + margin.left - coords[0]);
             });
-        this.svg.call(dragBehaviour);
+        this.g.call(dragBehaviour);
 
         this.highlightTagArea = this.g.append("g");
         this.highlightTagArea.append("text").text(() => "")
@@ -83,15 +102,6 @@ class StackedChart extends BaseVisualisation {
         this.yaxis = this.g.append("g")
             .attr("class", "axis axis--y");
 
-        var radiobutton = 0;
-        //BUG if I don't load the application in full 
-        //screen this does not work
-        this.svg.style("pointer-events", "visible")
-            .on('click', function () {
-                radiobutton = (radiobutton + 1) % 3;
-            });
-
-        this.radiobutton = radiobutton;
         this.totalCount = 1;
         this.scaleFactor = 1;
         this.x = x;
@@ -100,6 +110,7 @@ class StackedChart extends BaseVisualisation {
         this.width = width;
         this.height = height;
         this.tags = [];
+        this.mode = "Counts"
 
         var count = 0;
     }
@@ -116,54 +127,39 @@ class StackedChart extends BaseVisualisation {
         return filtered;
     }
 
+    setMode(mode) {
+        this.mode = mode;
+        this.updateLegend();
+        if(this.mode === "Percentages") {
+            this.updateWithTransformedData(this.scaleData(this.transformed_data), [10, "%"]);
+        } else {
+            this.updateWithTransformedData(this.transformed_data,  [10, "d"]);
+        }
+    }
+
+    updateLegend() {
+        this.legendArea.selectAll(".barchart-legend")
+            .style("font-weight", d => this.mode === d  ? "bold" : 'normal')
+            .style("cursor", "pointer")
+            .attr("class", d => this.mode === d ? "barchart-legend opacity1" : "barchart-legend opacity0-2")
+    }
+
+
     update(rawdata, filtered_data, data_has_changed = false, tags = []) {
         super.update(rawdata, filtered_data, data_has_changed);
+        this.tags = tags.length < 1 ? this.standardKeys(filtered_data,9) : tags;
+        this.tags.push("other");
 
-        var yMax = 1;
-        var yTicks = [10, "%"];
+        // if (!this.options.zoomed_percentage) this.tags.unshift("other");
 
-        //I need to implement a radiobutton about what to show:
-        var radiobutton = 2;
+        this.transformed_data = this.transformData(filtered_data);
+        this.setMode(this.mode);
+    }
 
-        this.tags = tags.length < 1 ? this.standardKeys(filtered_data, 25) : tags;
-
-        // if (!this.options.zoomed_percentage) this.tags.unshift("rest");
-
-        var data = this.transformData(filtered_data);
-        yMax = this.maxCount(data);
-        yTicks = [10, "d"];
-
-        // switch (radiobutton) {
-        //     //Percentages, show 100%
-        //     case 0:
-        //         this.tags.push("rest");
-        //         data = this.scaleData(data);
-        //         yMax = this.maxCount(data);
-        //         this.tags.pop();
-        //         break;
-        //     //Percentages, show zoomed
-        //     case 1:
-        //         data = this.scaleData(data);
-        //         yMax = this.maxCount(data);
-        //         break;
-        //     //Number of posts
-        //     case 2:
-        //         this.tags.push("rest");
-        //         yMax = this.maxCount(data);
-        //         yTicks = [10, "d"];
-
-        //         break;
-        // }
-
-        // if (tags.length < 1) this.tags = this.standardKeys(data, 5);
-
-
-        // data = this.scaleData(data);
-
-        // console.log(this.maxCount(data));
-
+    updateWithTransformedData(transformedData, yTicks) {
         var keys = this.tags;
-
+        var yMax = this.maxCount(transformedData);
+        console.log(yMax,transformedData);
         var x = this.x,
             y = this.y,
             z = this.z,
@@ -172,7 +168,7 @@ class StackedChart extends BaseVisualisation {
             height = this.height,
             stack = this.stack;
 
-        x.domain(d3.extent(data, function (d) { return d.date; }));
+        x.domain(d3.extent(transformedData, function (d) { return d.date; }));
         y.domain([0, yMax]);
         z.domain(keys);
         stack.keys(keys);
@@ -181,7 +177,7 @@ class StackedChart extends BaseVisualisation {
             .y0(function (d) { return y(d[0]); })
             .y1(function (d) { return y(d[1]); });
 
-        var stackedData = stack(data);
+        var stackedData = stack(transformedData);
 
         var layer = this.dataArea.selectAll("path")
             .data(stackedData);
@@ -219,7 +215,7 @@ class StackedChart extends BaseVisualisation {
 
         this.yaxis.call(d3.axisLeft(y).ticks(yTicks[0], yTicks[1]));
 
-        this.updateSelectedTagLabel()
+        this.updateSelectedTagLabel();
     }
 
     updateSelectedTagLabel(tagName) {
@@ -253,7 +249,7 @@ class StackedChart extends BaseVisualisation {
             var tempDate = minYear + "-" + (m < 10 ? "0" + m : m);
             countsPerMonth[tempDate] = {
                 "date": d3.timeParse("%Y-%m")(tempDate),
-                "rest": 0
+                "other": 0
             };
             tags.forEach(t => countsPerMonth[tempDate][t] = 0);
         }
@@ -262,7 +258,7 @@ class StackedChart extends BaseVisualisation {
                 var tempDate = y + "-" + (m < 10 ? "0" + m : m);
                 countsPerMonth[tempDate] = {
                     "date": d3.timeParse("%Y-%m")(tempDate),
-                    "rest": 0
+                    "other": 0
                 };
                 tags.forEach(t => countsPerMonth[tempDate][t] = 0);
             }
@@ -271,7 +267,7 @@ class StackedChart extends BaseVisualisation {
             var tempDate = maxYear + "-" + (m < 10 ? "0" + m : m);
             countsPerMonth[tempDate] = {
                 "date": d3.timeParse("%Y-%m")(tempDate),
-                "rest": 0
+                "other": 0
             };
             tags.forEach(t => countsPerMonth[tempDate][t] = 0);
         }
@@ -284,7 +280,7 @@ class StackedChart extends BaseVisualisation {
             if (tags.includes(d.TagName)) {
                 countsPerMonth[month][d.TagName] += 1;
             } else {
-                countsPerMonth[month]["rest"] += 1;
+                countsPerMonth[month]["other"] += 1;
             }
         });
 
@@ -306,9 +302,12 @@ class StackedChart extends BaseVisualisation {
         }
 
         var scaledData = [];
-        data.forEach(d => scaledData.push(d));
+        data.forEach(d => {
+            var clone = {};
+            Object.assign(clone,d);
+            scaledData.push(clone)
+        } );
 
-        console.log(scaledData);
         var sums = {};
         scaledData.forEach(countObject => sums[countObject.date] = getSum(countObject));
         scaledData.forEach(

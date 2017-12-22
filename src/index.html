@@ -33,28 +33,10 @@
     </head>
   <body > 
 
-    <div class="popup-outer"  >
-      <div class="popup-inner" id="barchart-options" >
-      </div>
-    </div>    
     <div class="main">
       <div class="left">
         <div class="top">
-              <fieldset>
-                  <legend>Choose what counts to show in the stacked chart </legend>
-                  <div>
-                    <input id="checkbox_percentages" type="checkbox" value="Percentages" onclick="updateStackedChart(this.value, this.checked)">
-                    <label for="checkbox_percentages">Percentages</label>
-                  </div>
-                  <div>
-                    <input id="checkbox_zoom" type="checkbox" value="Zoom" onclick="updateStackedChart(this.value, this.checked)">
-                    <label for="checkbox_zoom">Zoom</label>
-                  </div>
-                  <div>
-                    <input id="checkbox_posts" type="checkbox" value="Posts" onclick="updateStackedChart(this.value, this.checked)">
-                    <label for="checkbox_posts">Number of posts</label>
-                  </div>     
-                </fieldset>
+            
         </div>
         <div class="bottom">
            <div id="taggraph" style="height:100%;width:100%"></div>
