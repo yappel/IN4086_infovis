@@ -14,10 +14,6 @@ class StatisticsView extends BaseVisualisation {
      */
     constructor(root, filterChangedCallback) {
         super(root, filterChangedCallback);
-        this.root.append("p")
-            .text("This is a visualisation of posts on StackOverflow tagged with the top 25 tags. The graph displays connections between tags: the more posts have a tag in common, the stronger the connection. The other graphs provide information on the development over time and the interaction with posts per tag. Below some basic information is shown of the complete dataset used and the filtered dataset by interacting with the visualisations.")
-            .style("margin", "0px")
-            .style("padding", "10px");
         this.dataset_view = this.root.append("div");
         this.dataset_view.style("padding", "10px");
         this.dataset_view.append("h2")
