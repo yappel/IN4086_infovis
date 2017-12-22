@@ -24,20 +24,23 @@ class TagGraph extends BaseVisualisation {
         this.options = {
             width: containerSize.width,
             height: containerSize.height,
-            node_radius: 10,
             use_percentage: true
         };
         // #ece7f2
         // #a6bddb
         // #2b8cbe  #045a8d
         var style = {
-            node_radius: 10,
-            node_colour: "#72CBE0",
-            node_colour_hover: "#47B8D3",
-            node_colour_selected: "#24A9C8",
-            node_stroke_colour: "#72CBE0",
-            node_stroke_width: 1.5,
-            link_colour: "#FF9328"
+            node_radius: 15,
+            node_colour: "#833A1A",
+            node_colour_hover: "#EF8250",
+            node_colour_selected: "#e95916",
+            node_stroke_colour: "#e95916",
+            node_stroke_width: 0,
+            link_colour: "#d7e6e9",
+            link_stroke_width_max : 15,
+            text_color: "#efefef",
+            text_stroke_color : "black",
+            text_stroke_width : "0.02em"
         }
         Object.assign(this.options, options);
         this.options.style ? Object.assign(this.options.style, style) : this.options.style = style;
@@ -49,7 +52,7 @@ class TagGraph extends BaseVisualisation {
         this.simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id((d) => d.id))
             .force("charge", d3.forceManyBody()
-                .strength(-0.3 * Math.min(this.options.height,this.options.width))
+                .strength(-0.5 * Math.min(this.options.height,this.options.width))
                 .distanceMax([Math.min(this.options.height,this.options.width)]))
             .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2));
         // Create the selections for the links and nodes
@@ -84,30 +87,17 @@ class TagGraph extends BaseVisualisation {
         // Select all links and update based on data
         var selected_links = this.links.selectAll("line")
             .data(this.transformed_data.links);
-        selected_links
-            .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
-            .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
-            .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
         // Create new links
-        selected_links.enter().append("line")
-            .attr("stroke-width", (d) => weightScale(d.value) * 10) // TODO: other function for weight
-            .attr("stroke", (d) => this.options.style.link_colour) // TODO: derive colour from value
-            .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));//(d) => weightScale(d.value));
+        selected_links.enter().append("line").merge(selected_links)
+            .attr("stroke-width", (d) => Math.max(weightScale(d.value), 0.02) * this.options.style.link_stroke_width_max) 
+            .attr("stroke", (d) => this.options.style.link_colour)
+            .style("opacity", (d) => Math.max(weightScale(d.value), 0.25));
         // Remove old links
         selected_links.exit().remove();
         // Select all nodes and update based on data
         var selected_nodes = this.nodes.selectAll("g")
             .data(this.transformed_data.nodes);
-        // Update the circles
-        selected_nodes.selectAll("circle")
-            .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
-            .attr("stroke", this.options.style.node_stroke_colour)
-            .attr("stroke-width", this.options.style.node_stroke_width)
-            .attr("r", this.options.node_radius);
-        // Update the labels
-        selected_nodes.selectAll("text")
-            .style("color", "black")
-            .text(function(d) { return d.id });
+            
         // Append a new group for each node and define drag behaviour
         var new_nodes = selected_nodes.enter().append("g");
         new_nodes.call(d3.drag()
@@ -115,7 +105,7 @@ class TagGraph extends BaseVisualisation {
             .on("drag", this.nodeDragMoved.bind(this))
             .on("end", this.nodeDragEnded.bind(this)));
         // Append a circle for node visualisation and define mouse behaviour and data
-        var radius = this.options.node_radius;
+        var radius = this.options.style.node_radius;
         var hover_colour = this.options.style.node_colour_hover;
         new_nodes.append("circle")
             .on("mouseover", (item) => {
@@ -139,18 +129,23 @@ class TagGraph extends BaseVisualisation {
                 } else {
                     tags.push(item.id);
                 }
-                el.attr("fill", d => this.getCircleColor(d,null));
+                el.attr("fill", d => this.getCircleColor(d,null))
                 this.filterChanged(this);
             })
-            .attr("fill",  d => this.getCircleColor(d,null)) // TODO: change colour based on ID
+            .merge(selected_nodes.selectAll("circle"))
+            .attr("fill",  d => this.getCircleColor(d,null))
             .attr("stroke", this.options.style.node_stroke_colour)
             .attr("stroke-width", this.options.style.node_stroke_width)
-            .attr("r", this.options.node_radius);
+            .attr("r", this.options.style.node_radius);
         // Append label based on data
-        new_nodes.append("text")
-            .attr("dx", this.options.node_radius + 5)
+        new_nodes.append("text").merge(selected_nodes.selectAll("text"))
+            .attr("dx", this.options.style.node_radius + 5)
             .attr("dy", ".35em")
-            .style("color", "black")
+            .attr("fill",  this.options.style.text_color)
+            .attr("font-size" , "1.5em")
+            .attr("font-familiy", "Gill Sans Extrabold, sans-serif")
+            .attr("stroke", this.options.style.text_stroke_color)
+            .attr("stroke-width", this.options.style.text_stroke_width)
             .text(function(d) { return d.id })
         // Remove the old nodes
         selected_nodes.exit().remove();
@@ -164,16 +159,17 @@ class TagGraph extends BaseVisualisation {
         this.simulation.alphaTarget(0.25).restart();
     }
 
-    getCircleColor(d, selectedTags = null) {
-        if(!selectedTags && this.selection) {
-            selectedTags = this.selection.selectedTags
-        }
+    getCircleColor(d) {
         var defaultColor = this.options.style.node_colour;
         var selectedColor = this.options.style.node_colour_selected;
-        if(selectedTags) {
-            return selectedTags.indexOf(d.id) >= 0 || selectedTags.length === 0 ? selectedColor : defaultColor;
+        return this.tagIsSelected(d.id) ? selectedColor : defaultColor;
+    }
+
+    tagIsSelected(tagName) {
+        if(!this.selection || !this.selection.selectedTags || this.selection.selectedTags.length === 0) {
+            return true;
         }
-        return defaultColor;
+        return this.selection.selectedTags.indexOf(tagName) >= 0
     }
 
     filter(data) {
