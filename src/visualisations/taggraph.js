@@ -71,7 +71,9 @@ class TagGraph extends BaseVisualisation {
     update(data, filtered_data, data_has_changed = false) {
         // Call super method & transform to graph data format
         super.update(data, filtered_data, data_has_changed);
-        this.transformed_data = this.transformData(data);
+        this.transformed_data = this.transformData(data)
+        var filtered_data_transformed = this.transformData(filtered_data);
+        this.transformed_data.links = filtered_data_transformed.links;
         // Define scale for opacity and force link weights
         var weightScale = d3.scaleLinear()
             .domain(d3.extent(this.transformed_data.links, function (d) { return Math.pow(d.value,1) }))
