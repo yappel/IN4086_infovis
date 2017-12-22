@@ -194,8 +194,13 @@ class StackedChart extends BaseVisualisation {
                     {
                         return d2.key !== d.key
                     });
+                var el =  this.dataArea.selectAll("path").filter(d2 => 
+                    {
+                        return d2.key === d.key
+                    });
                 self.updateSelectedTagLabel(d.key);
-                area.transition().style("opacity",0.4)
+                area.transition().style("opacity",0.3)
+                el.transition().style("opacity",1)
                 
             })
             .on("mouseout", (d) => {
@@ -204,11 +209,12 @@ class StackedChart extends BaseVisualisation {
                         return d2.key !== d.key
                     });
                 self.updateSelectedTagLabel("");
-                area.transition().style("opacity",1)
+                area.transition().style("opacity",0.7)
             });
         layerEnter.merge(layer)
             .transition()
             .style("fill", function (d) { return z(d.key); })
+            .style("opacity", 0.7)
             .attr("d", area);
 
         this.xaxis.call(d3.axisBottom(x));
